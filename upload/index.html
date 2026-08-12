@@ -4,60 +4,94 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
-  <title>Загрузка 1С · вход</title>
+  <title>Загрузка 1С · Rustrans</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet" />
   <style>
-    :root { --navy:#0b1c33; --red:#e30613; --muted:#5b6b7c; --paper:#eef2f7; }
+    :root { --navy:#0b1c33; --red:#e30613; --muted:#5b6b7c; --line:#d9e0ea; }
     * { box-sizing:border-box; }
     body {
-      margin:0; min-height:100vh; font-family:Montserrat,system-ui,sans-serif;
+      margin:0; min-height:100vh; font-family:Montserrat,system-ui,sans-serif; color:var(--navy);
       background:
-        radial-gradient(900px 420px at 10% -10%, rgba(227,6,19,.12), transparent 55%),
-        radial-gradient(700px 380px at 100% 0%, rgba(11,28,51,.10), transparent 50%),
+        radial-gradient(900px 420px at 12% -10%, rgba(227,6,19,.10), transparent 55%),
         linear-gradient(165deg, #f7f9fc, #e8eef6 55%, #f3f6fa);
-      display:grid; place-items:center; padding:24px; color:var(--navy);
+      padding:28px 16px;
     }
+    .wrap { width:min(640px,100%); margin:0 auto; }
+    h1 { margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:-.03em; }
+    .sub { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
     .card {
-      width:min(420px,100%); background:#fff; border:1px solid #d9e0ea;
-      border-radius:18px; padding:28px 26px 24px; box-shadow:0 18px 50px rgba(11,28,51,.08);
+      background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
+      box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
     }
-    h1 { margin:0 0 6px; font-size:22px; font-weight:800; letter-spacing:-.03em; }
-    p { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
-    label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:6px; }
-    input {
+    .field-label {
+      display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.04em; color:var(--muted); margin:0 0 6px;
+    }
+    input[type=password], select, button, input[type=file] { font:inherit; }
+    input[type=password], select {
       width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
-      font:inherit; font-size:15px; outline:none; background:#fbfcfe;
+      margin-bottom:12px; background:#fbfcfe; font-weight:600;
     }
-    input:focus { border-color:var(--navy); box-shadow:0 0 0 3px rgba(11,28,51,.12); }
+    input[type=file] {
+      width:100%; margin:0 0 12px; padding:10px; border:1px solid #c9d3e0;
+      border-radius:12px; background:#fbfcfe;
+    }
     button {
-      margin-top:14px; width:100%; border:0; border-radius:12px; padding:12px 14px;
-      background:var(--navy); color:#fff; font:inherit; font-weight:700; cursor:pointer;
+      width:100%; border:0; border-radius:12px; padding:13px 18px;
+      background:var(--navy); color:#fff; font-weight:700; cursor:pointer;
     }
-    button:hover { background:#132744; }
-    .err { display:none; margin-top:12px; color:var(--red); font-size:13px; font-weight:600; }
-    .err.show { display:block; }
-    .hint { margin-top:14px; font-size:11px; color:#8a97a8; }
+    button:disabled { opacity:.55; cursor:wait; }
+    .msg { margin-top:12px; font-size:13px; font-weight:600; display:none; white-space:pre-wrap; }
+    .msg.show { display:block; }
+    .msg.ok { color:#1b7f4e; }
+    .msg.err { color:var(--red); }
+    .hint { font-size:12px; color:var(--muted); line-height:1.45; }
+    #gate { display:block; }
+    #app { display:none; }
+    #fname { margin:0 0 12px; font-size:13px; font-weight:700; }
   </style>
 </head>
 <body>
-  <div class="card">
+  <div class="wrap">
     <h1>Загрузка 1С</h1>
-    <p>Введите пароль, чтобы открыть загрузчик выгрузок 1С.</p>
-    <form id="f" autocomplete="current-password">
-      <label for="p">Пароль</label>
-      <input id="p" type="password" required autofocus placeholder="••••••••" />
-      <button type="submit">Войти</button>
-      <div class="err" id="err">Неверный пароль</div>
-    </form>
-    <div class="hint">Сессия только в этой вкладке · без пароля данные не читаются</div>
-  </div>
-  <script>
-    const SALT_B64 = 'OViKvAsMOaJ607bejcqDvQ==';
-    const IV_B64 = 'wcm2R5DTBkDBPmsE';
-    const DATA_B64 = '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';
-    const ITERATIONS = 200000;
+    <p class="sub">Пароль → выбрать XLSX → отправить. Дубли документов не создаются.</p>
 
-    const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    <div class="card" id="gate">
+      <div class="field-label">Пароль</div>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      <button type="button" id="unlock">Войти</button>
+      <div class="msg" id="gate-msg"></div>
+    </div>
+
+    <div id="app">
+      <div class="card">
+        <div class="field-label">Тип выгрузки</div>
+        <select id="kind">
+          <option value="realizations">Реализации</option>
+          <option value="payments">Оплаты</option>
+        </select>
+
+        <div class="field-label">Файл Excel (.xlsx)</div>
+        <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        <div id="fname">Файл не выбран</div>
+
+        <button type="button" id="send">Отправить</button>
+        <div class="msg" id="msg"></div>
+      </div>
+      <div class="card hint">
+        Файл уходит в private-репозиторий. Через 1–3 минуты Actions разберёт его в РНП.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SALT_B64 = 'GAG7fby3iZ2Yh/HMYBYtXA==';
+    const IV_B64 = 's7wBaBqRBH6bvjxm';
+    const DATA_B64 = '8UUuAq/3+G7LxOgLAcc/O3Otsv1y/zyirTZguC6iUCZc/DiMCt6yiNtLgLc4ayO+pH5XJtdOgmXEgRVQnc8s/m3atk24l2QAmBFxV4saC1iI1ZP/WBPABlnl48YR294UX4PE2ILZiv5n6SCzeLGJMzOmKcnOnc2N3zJtU0mlXQuaup6cVUQfko2Z5lQhxekN957y++upQoDBcjutgR30pSH8NVv+KA/gacZZbEMXuvoHCVtan3o=';
+    const ITERATIONS = 200000;
+    let CFG = null;
+
+    const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
     async function deriveKey(password, salt) {
       const enc = new TextEncoder();
@@ -72,28 +106,88 @@
     }
 
     async function unlock(password) {
-      const salt = b64(SALT_B64);
-      const iv = b64(IV_B64);
-      const data = b64(DATA_B64);
-      const key = await deriveKey(password, salt);
-      const plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv }, key, data);
-      const html = new TextDecoder().decode(plain);
-      document.open();
-      document.write(html);
-      document.close();
+      const key = await deriveKey(password, b64(SALT_B64));
+      const plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(IV_B64) }, key, b64(DATA_B64));
+      CFG = JSON.parse(new TextDecoder().decode(plain));
+      if (!CFG || !CFG.token || !CFG.repo) throw new Error("bad config");
+      document.getElementById("gate").style.display = "none";
+      document.getElementById("app").style.display = "block";
     }
 
-    document.getElementById("f").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const err = document.getElementById("err");
-      err.classList.remove("show");
-      const password = document.getElementById("p").value;
+    function show(el, text, ok) {
+      el.textContent = text;
+      el.className = "msg show " + (ok ? "ok" : "err");
+    }
+
+    document.getElementById("unlock").onclick = async () => {
+      const el = document.getElementById("gate-msg");
+      el.className = "msg";
       try {
-        await unlock(password);
-      } catch (ex) {
-        err.classList.add("show");
+        await unlock(document.getElementById("password").value);
+      } catch (e) {
+        show(el, "Неверный пароль", false);
       }
+    };
+    document.getElementById("password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("unlock").click();
     });
+
+    const fileInput = document.getElementById("file");
+    const fname = document.getElementById("fname");
+    fileInput.addEventListener("change", () => {
+      const f = fileInput.files && fileInput.files[0];
+      fname.textContent = f ? (f.name + " · " + (f.size/1024).toFixed(1) + " КБ") : "Файл не выбран";
+    });
+
+    function toB64(bytes) {
+      let s = "";
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        s += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(s);
+    }
+
+    document.getElementById("send").onclick = async () => {
+      const msg = document.getElementById("msg");
+      msg.className = "msg";
+      if (!CFG) { show(msg, "Сначала введите пароль", false); return; }
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) { show(msg, "Выберите файл .xlsx", false); return; }
+      const kind = document.getElementById("kind").value;
+      const stamp = new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+Z$/, "Z");
+      const safe = file.name.replace(/[^\w.\- ()\u0400-\u04FF]+/g, "_");
+      const path = "data/inbox/1c/" + kind + "/" + stamp + "__" + safe;
+      const btn = document.getElementById("send");
+      btn.disabled = true; btn.textContent = "Отправка…";
+      try {
+        const buf = new Uint8Array(await file.arrayBuffer());
+        if (buf.byteLength > 25 * 1024 * 1024) throw new Error("Файл больше 25 МБ");
+        const body = {
+          message: "upload(1c): " + safe,
+          content: toB64(buf),
+          branch: CFG.branch || "main"
+        };
+        const r = await fetch("https://api.github.com/repos/" + CFG.repo + "/contents/" + path, {
+          method: "PUT",
+          headers: {
+            "Authorization": "Bearer " + CFG.token,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"
+          },
+          body: JSON.stringify(body)
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.message || ("GitHub " + r.status));
+        show(msg, "Готово:\n" + path + "\nЧерез пару минут данные в РНП.", true);
+        fileInput.value = "";
+        fname.textContent = "Файл не выбран";
+      } catch (e) {
+        show(msg, String(e.message || e), false);
+      } finally {
+        btn.disabled = false; btn.textContent = "Отправить";
+      }
+    };
   </script>
 </body>
 </html>
