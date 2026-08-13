@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Планы МОП · Rustrans</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { --navy:#0b1c33; --red:#e30613; --muted:#5b6b7c; --line:#d9e0ea; }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; font-family:Montserrat,system-ui,sans-serif; color:var(--navy);
+      background:
+        radial-gradient(900px 420px at 12% -10%, rgba(227,6,19,.10), transparent 55%),
+        linear-gradient(165deg, #f7f9fc, #e8eef6 55%, #f3f6fa);
+      padding:28px 16px;
+    }
+    .wrap { width:min(640px,100%); margin:0 auto; }
+    h1 { margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:-.03em; }
+    .sub { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
+    .card {
+      background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
+      box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
+    }
+    .field-label {
+      display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.04em; color:var(--muted); margin:0 0 6px;
+    }
+    input[type=password], input[type=month], input[type=number], button { font:inherit; }
+    input[type=password], input[type=month], input[type=number] {
+      width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
+      margin-bottom:12px; background:#fbfcfe; font-weight:600;
+    }
+    .mgr {
+      display:grid; grid-template-columns:1fr 160px; gap:10px; align-items:end;
+      margin-bottom:4px;
+    }
+    .mgr .name { font-size:14px; font-weight:700; padding-bottom:18px; }
+    .meta {
+      display:flex; flex-wrap:wrap; gap:10px 16px; font-size:12px; color:var(--muted);
+      margin:0 0 14px; padding:10px 12px; background:#f7fafc; border-radius:12px;
+    }
+    .meta strong { color:var(--navy); }
+    button {
+      width:100%; border:0; border-radius:12px; padding:13px 18px;
+      background:var(--navy); color:#fff; font-weight:700; cursor:pointer;
+    }
+    button.secondary {
+      background:#fff; color:var(--navy); border:1px solid #c9d3e0; margin-bottom:12px;
+    }
+    button:disabled { opacity:.55; cursor:wait; }
+    .msg { margin-top:12px; font-size:13px; font-weight:600; display:none; white-space:pre-wrap; }
+    .msg.show { display:block; }
+    .msg.ok { color:#1b7f4e; }
+    .msg.err { color:var(--red); }
+    .hint { font-size:12px; color:var(--muted); line-height:1.45; }
+    #gate { display:block; }
+    #app { display:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Планы МОП</h1>
+    <p class="sub">Пароль → месяц → план выручки ₽. Рабочие дни из календаря РФ, руками не вводятся.</p>
+
+    <div class="card" id="gate">
+      <div class="field-label">Пароль</div>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      <button type="button" id="unlock">Войти</button>
+      <div class="msg" id="gate-msg"></div>
+    </div>
+
+    <div id="app">
+      <div class="card">
+        <div class="field-label">Месяц</div>
+        <input id="month" type="month" />
+        <button type="button" class="secondary" id="reload">Загрузить месяц</button>
+        <div class="meta" id="meta">—</div>
+        <div id="fields"></div>
+        <button type="button" id="save">Сохранить</button>
+        <div class="msg" id="msg"></div>
+      </div>
+      <div class="card hint">
+        План уходит в private-репозиторий (<code>data/warehouse/plans/</code>).
+        Через 1–3 минуты Actions пересоберёт РНП.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SALT_B64 = 'WXwLa791fhmopuYbtBw/lA==';
+    const IV_B64 = 'IDhQ0Awl0vI2GYST';
+    const DATA_B64 = 'fHBMkJqHe74YSQdo5ThyCT94GdqzqWTUab0Ny/m/wNGSTlpCGPjp9e9q9jnCzIDcZX6mYlORKKHEnUxTzOLz4lA/Trb/vO0IUwvmUUCLxq8Uh8gbRC4SS6eD4Z4pubdqhrbCfdBbWWcxJvg0ky/2C7KJAfYR/jo8pYn9+5kkcj7Z3T9wxjUIahUA7usp7Ebtvi3R+omTjDb5Y39zU+DDjPqcFtgyxe3eq1kxlVg6TsD9IdO+kgD6OL99NZmLf57pZ/IbZ5+iGBAO8VEcWRMqUtAAyhgkmsYAaCG7olSs9dP4pRiax2gUzwCoBvLLjdfR9KYKWM5SfOkGp+XKpdNpLwYYSCUrjPqXLAve8a7DxgVrR0EM0TutkbPyU9duYUyvL6K1g43DSqqJlOz8/RnXnEodktCJMxSXjJR20uXSU6wW3TIZraa+qXO/K5iX4UYiG/TXmAHfKshjEj407JbZjVqREsamNOUQ03N9c85N3qwbw5/H1cFeNC3U4TpGry8HKWJWsRgIXVaRO5yL1G48Cd0MG9aVsadlGJ3gyz8xgq/t9Gplko2ctpGdMsbxRf3nGz+hpKfW5ecDLX8Fe9lGsrK42IRaigxIqh0DFb9isSVafOA4op2qtR79/1TMr7Ah4lPvKfXF2NbNF6XIi57dbuF7cDZAdqWpriOc6OHmOxg05dnKW0HXErVNdlJdyJ6DzcoGqLgn5yOhmPGQf6lQylTMPpXJx3xwrKz0J3g1PLIEdxTXWbJRrBRgQjAFsXMGnIFm5ydg6Nyw/9J0Sj9X69WwBCisxB5zJyAX9dBnOYcatK2XUY7enEMup3G0jUTgvkgk/sqNYteCHBDsaPj58MoMfwMjdECv693EF/Q64ohnzaiIIMYg2vebeZ/JO8fIe4XM640DwsD/siaZzVD+47m63c9VO4nkIZvupv3mA1Bu6YQQGFRXxg1+7UI6FFOwLHd9HoKsob0eyfoo/aWwzcEWBN1c1q6qwHkbzbVX7Np3rW1pruKSc8v8QpJ/dZ8F9NWdYHutD6u2omtgXQDC/VcZxbm626LC6SDAEU9heK4MKUn+tdrJDLAzIVGv9rxh9TD3Ug9asB0DgFjbAVyTS/P6+wue+RhDXnzAP4DWl5eJk8TDuE/759qyKKpgd5Ompf5khC+qgKeWnGTY2OgGF3GHQxK1ux1QxmdEadH5K7IhOVQjJcv7QN1cINlBTQ91jkOEi1rrhS+py5VMpKiJ6Woi3hqX/zzm3Ny5kc+AJv4duk5CeoizFqinstvqfZi8qmXLf3/XQW7/thnb79tTce73rS4oVa3JRfK+HtNpegLz1EVDSXZ34jbsatIaOn1CwzkhOLSqKAUk8WXyxX9RMH2JyshBoYhtArtw1/q8PbQkuWO1PBVbXIesFyVWDLA0YIvlP4CAideCmGQ2A5taBEAOHVPwrDG+GZX9atONFFIwDSU85tJTJEszo5ickCHTfwwpVxIJYC0h7UN7+6mAIZKroMPrcUmjbMRd4KqX9EczAmn1KHVdhxhR0znsRlYtpgTYILFRMvZK65be6O67oTx8eV2PIyAw9kd+XWC035/wPPfZ8IehDsFIbBUF9qF8UrBuY0/UrT6Kyx8Tpz+7/RN4NOsM+JEg/Tdtoj0++OXxShOldyzwidYpnmkV+FbgP9WBKJtLrY6mdXXMh58mPhY+zuKBICO3/t8jJsZHV9O96CW4TR1CPUEurGBwuwy44vetahxRgZcbXZ/xPZ8mJyRhJzIQm8nd87SSynNSpQd612s+zmmn2IhCc2C32J4Lq2N32M5R//IOyJanczF+UEm8asuIu3G06QD1iZpflM8bCY6eE5qskqler0luAsazPphRr8Fq3dyazb4havurH+ipmA0oiv1jCMC1eQOIxZWjlXXvzMR1f1YP/9vtxhlw/X5cFKqsGfUs2boVYgl3Tj0tqp2J5uVypnkqCXA7PrAC7DWA08/C5RAj01Mu8dxN7NOz+8vNrAoyE9B1/KaChqv52qpu17ZbybJUqLpfskKbjx7u4XH+Lai0nrYc7vQia88nUEjB1rRJSIHX/gIk6OzPWOLqdIhZ5qmOaet1g55X5YRAZ/YHRrcU550yg9Y72H9QQFqJjV6Cw2yusELAu+5FHkvP7s05SCXuobfChO5Wvn2Q19mb/e1i7b7xNrDpn9X3G1iX8l1OLL2sks2y1u18eBBK1Kyks9OfooHDATx6XN6CkZETFCckZXhFz2AuDcmGwyUAq9QRkRYYWZuv7FSQdr5wbfLHmkY0qsJzht0AmCNPDCXzXblPom/suRui+uSymUXcsng47iMvZLWDCnKCj4PV8dA9gOKKIV9YaMdlS90aubd2QHayfhUXvP8M9VIz2YSsMSNbRQ6ytw0kTWX8fKUCJnXm+DBKzRu4wC62ml6KEhJG5eR14CUirC2S8LlI3GP580AsXUqlY5caYlExkzt1NoogsgIlikIBINNDgbAF/RDf9FOD0MU1DLpWfEqUkRQkAHP3FR2qFOP0UpabucZfeO/KlI8MGHrBmPyPvuERdp/yE8J/vcYzl9VVN96yCNlewcIhX7rTF3qNewhEkjzwlY8PlTQFVtjvQVtAnSzIxtYHUM2y6jYm5FxmpyK7/ZruxCbtcucNK/H3u3m30ecTtxs9T9+ANpsBQKbUgW/cvRjw/razTjh1LWhE+QWma/uQIYQZitGqRYgaIGKNy2NePbrEO6ta8tnVTh2JWBa8Re55C4FrBLznWFSLSRcMlHs3++HGqZaCtz8oi6RNN7O1pDUoaCtjGbzqmv/UDcMc/0t15NKgT8RNzw32QFbi2MifO3JrrAsi3UkYL6grP+9Uj9e9HX1iXibP36NqPHxrrQff7kaafPRnLM2fSKjIGKp/qSY56ZPXQuv4kd4mhte+ebQ9E73twxo4Bf8dXl9ZnTufsqiC1gFQ8BlrKAbNhifkBDQ49/zphZukCWVj3kKPx0o8v1T1OG/5BD04rjf2oyl3i8Ho+NPLyU9w0DCww64=';
+    const ITERATIONS = 200000;
+    let CFG = null;
+    let NW = new Set();
+
+    const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+    async function deriveKey(password, salt) {
+      const enc = new TextEncoder();
+      const base = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+      return crypto.subtle.deriveKey(
+        { name:"PBKDF2", salt, iterations:ITERATIONS, hash:"SHA-256" },
+        base,
+        { name:"AES-GCM", length:256 },
+        false,
+        ["decrypt"]
+      );
+    }
+
+    function workDays(ym) {
+      const parts = ym.split("-");
+      const y = +parts[0], m = +parts[1];
+      if (!y || !m) return 0;
+      let n = 0;
+      const d = new Date(Date.UTC(y, m - 1, 1));
+      while (d.getUTCMonth() === m - 1) {
+        const iso = d.toISOString().slice(0, 10);
+        if (!NW.has(iso)) n += 1;
+        d.setUTCDate(d.getUTCDate() + 1);
+      }
+      return n;
+    }
+
+    function show(el, text, ok) {
+      el.textContent = text;
+      el.className = "msg show " + (ok ? "ok" : "err");
+    }
+
+    function renderFields(revenue) {
+      const box = document.getElementById("fields");
+      box.innerHTML = "";
+      (CFG.managers || []).forEach((m) => {
+        const key = m.rnp_key;
+        const wrap = document.createElement("div");
+        wrap.className = "mgr";
+        const val = revenue[key];
+        wrap.innerHTML =
+          '<div class="name">' + key + '</div>' +
+          '<div><div class="field-label">План ₽</div>' +
+          '<input type="number" min="0" step="1000" data-key="' + key + '" value="' +
+          (val == null || val === "" ? "" : val) + '" /></div>';
+        box.appendChild(wrap);
+      });
+    }
+
+    function ghHeaders() {
+      return {
+        "Authorization": "Bearer " + CFG.token,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+      };
+    }
+
+    async function unlock(password) {
+      const key = await deriveKey(password, b64(SALT_B64));
+      const plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(IV_B64) }, key, b64(DATA_B64));
+      CFG = JSON.parse(new TextDecoder().decode(plain));
+      if (!CFG || !CFG.token || !CFG.repo) throw new Error("bad config");
+      NW = new Set(CFG.non_working_dates || []);
+      const now = new Date();
+      const ym = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+      document.getElementById("month").value = ym;
+      document.getElementById("gate").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      await loadMonth();
+    }
+
+    async function loadMonth() {
+      const msg = document.getElementById("msg");
+      msg.className = "msg";
+      const ym = document.getElementById("month").value;
+      if (!ym) return;
+      const wd = workDays(ym);
+      let revenue = Object.assign({}, CFG.yaml_fallback || {});
+      let source = "yaml_fallback";
+      let updated = "—";
+      const path = "data/warehouse/plans/" + ym + ".json";
+      try {
+        const r = await fetch(
+          "https://api.github.com/repos/" + CFG.repo + "/contents/" + path + "?ref=" + encodeURIComponent(CFG.branch || "main"),
+          { headers: ghHeaders() }
+        );
+        if (r.status === 200) {
+          const j = await r.json();
+          const text = decodeURIComponent(escape(atob(String(j.content || "").replace(/\n/g, ""))));
+          const plan = JSON.parse(text);
+          Object.assign(revenue, plan.revenue_plan || {});
+          source = "file";
+          updated = plan.updated_at || "файл есть";
+        } else if (r.status !== 404) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.message || ("GitHub " + r.status));
+        }
+      } catch (e) {
+        show(msg, String(e.message || e), false);
+      }
+      document.getElementById("meta").innerHTML =
+        "<span>Рабочих дней: <strong>" + wd + "</strong></span>" +
+        "<span>Источник: <strong>" + source + "</strong></span>" +
+        "<span>Обновлено: <strong>" + updated + "</strong></span>";
+      renderFields(revenue);
+    }
+
+    document.getElementById("unlock").onclick = async () => {
+      const el = document.getElementById("gate-msg");
+      el.className = "msg";
+      try {
+        await unlock(document.getElementById("password").value);
+      } catch (e) {
+        show(el, "Неверный пароль", false);
+      }
+    };
+    document.getElementById("password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("unlock").click();
+    });
+    document.getElementById("reload").onclick = loadMonth;
+    document.getElementById("month").onchange = loadMonth;
+
+    document.getElementById("save").onclick = async () => {
+      const msg = document.getElementById("msg");
+      msg.className = "msg";
+      if (!CFG) { show(msg, "Сначала введите пароль", false); return; }
+      const ym = document.getElementById("month").value;
+      if (!ym) { show(msg, "Выберите месяц", false); return; }
+      const revenue_plan = {};
+      document.querySelectorAll("#fields input[data-key]").forEach((inp) => {
+        if (inp.value === "") return;
+        revenue_plan[inp.dataset.key] = Number(inp.value);
+      });
+      const payload = {
+        month: ym,
+        revenue_plan,
+        work_days: workDays(ym),
+        updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+        source: "plans_pages"
+      };
+      const path = "data/warehouse/plans/" + ym + ".json";
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2) + "\n")));
+      const btn = document.getElementById("save");
+      btn.disabled = true; btn.textContent = "Сохранение…";
+      try {
+        let sha = null;
+        const get = await fetch(
+          "https://api.github.com/repos/" + CFG.repo + "/contents/" + path + "?ref=" + encodeURIComponent(CFG.branch || "main"),
+          { headers: ghHeaders() }
+        );
+        if (get.status === 200) {
+          const gj = await get.json();
+          sha = gj.sha;
+        } else if (get.status !== 404) {
+          const gj = await get.json().catch(() => ({}));
+          throw new Error(gj.message || ("GitHub GET " + get.status));
+        }
+        const body = {
+          message: "plans: " + ym,
+          content,
+          branch: CFG.branch || "main"
+        };
+        if (sha) body.sha = sha;
+        const r = await fetch("https://api.github.com/repos/" + CFG.repo + "/contents/" + path, {
+          method: "PUT",
+          headers: ghHeaders(),
+          body: JSON.stringify(body)
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.message || ("GitHub " + r.status));
+        show(msg, "Готово:\n" + path + "\nЧерез пару минут РНП пересоберётся.", true);
+        await loadMonth();
+      } catch (e) {
+        show(msg, String(e.message || e), false);
+      } finally {
+        btn.disabled = false; btn.textContent = "Сохранить";
+      }
+    };
+  </script>
+</body>
+</html>
