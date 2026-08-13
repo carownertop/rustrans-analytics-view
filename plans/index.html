@@ -16,7 +16,7 @@
         linear-gradient(165deg, #f7f9fc, #e8eef6 55%, #f3f6fa);
       padding:28px 16px;
     }
-    .wrap { width:min(640px,100%); margin:0 auto; }
+    .wrap { width:min(720px,100%); margin:0 auto; }
     h1 { margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:-.03em; }
     .sub { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
     .card {
@@ -32,16 +32,36 @@
       width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
       margin-bottom:12px; background:#fbfcfe; font-weight:600;
     }
-    .mgr {
-      display:grid; grid-template-columns:1fr 160px; gap:10px; align-items:end;
-      margin-bottom:4px;
-    }
-    .mgr .name { font-size:14px; font-weight:700; padding-bottom:18px; }
+    input[type=number]:disabled { opacity:.45; background:#eef2f7; }
     .meta {
       display:flex; flex-wrap:wrap; gap:10px 16px; font-size:12px; color:var(--muted);
       margin:0 0 14px; padding:10px 12px; background:#f7fafc; border-radius:12px;
     }
     .meta strong { color:var(--navy); }
+    .sec { border-top:1px solid var(--line); padding-top:14px; margin-top:14px; }
+    .sec:first-child { border-top:0; padding-top:0; margin-top:0; }
+    .sec h3 { margin:0 0 10px; font-size:13px; font-weight:800; }
+    .metric {
+      border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:10px;
+      background:#fbfcfe;
+    }
+    .metric.undef { background:#f3f5f8; }
+    .metric-head {
+      display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:space-between;
+      margin-bottom:8px;
+    }
+    .metric-head .lab { font-size:13px; font-weight:700; }
+    .chk {
+      display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--muted);
+      cursor:pointer; user-select:none;
+    }
+    .chk input { width:16px; height:16px; accent-color:var(--navy); }
+    .mgr {
+      display:grid; grid-template-columns:1fr 150px; gap:8px; align-items:center;
+      margin-top:6px;
+    }
+    .mgr .name { font-size:13px; font-weight:700; }
+    .mgr input { margin-bottom:0; }
     button {
       width:100%; border:0; border-radius:12px; padding:13px 18px;
       background:var(--navy); color:#fff; font-weight:700; cursor:pointer;
@@ -62,7 +82,7 @@
 <body>
   <div class="wrap">
     <h1>Планы МОП</h1>
-    <p class="sub">Пароль → месяц → план выручки ₽. Рабочие дни из календаря РФ, руками не вводятся.</p>
+    <p class="sub">Пароль → месяц → планы по метрикам РНП. «План не определён» — метрику в РНП не красим.</p>
 
     <div class="card" id="gate">
       <div class="field-label">Пароль</div>
@@ -77,22 +97,23 @@
         <input id="month" type="month" />
         <button type="button" class="secondary" id="reload">Загрузить месяц</button>
         <div class="meta" id="meta">—</div>
-        <div id="fields"></div>
+        <div id="sections"></div>
         <button type="button" id="save">Сохранить</button>
         <div class="msg" id="msg"></div>
       </div>
       <div class="card hint">
         План уходит в private-репозиторий (<code>data/warehouse/plans/</code>).
-        Через 1–3 минуты Actions пересоберёт РНП.
+        Через 1–3 минуты Actions пересоберёт РНП. Норма дня = план месяца ÷ рабочие дни.
       </div>
     </div>
   </div>
 
   <script>
-    const SALT_B64 = 'WXwLa791fhmopuYbtBw/lA==';
-    const IV_B64 = 'IDhQ0Awl0vI2GYST';
-    const DATA_B64 = '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';
+    const SALT_B64 = 'T0swmfMfFQOcmVpv5Sj6yA==';
+    const IV_B64 = 'GdZ9FeQbK1DnSTm8';
+    const DATA_B64 = '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';
     const ITERATIONS = 200000;
+    const SECTIONS = [{"title": "KPI 0. Выручка", "metrics": [{"key": "revenue", "label": "Выручка по реализациям, ₽", "kind": "money"}]}, {"title": "KPI 1. Сделки / УПД", "metrics": [{"key": "deals_cnt", "label": "Сделки, шт", "kind": "num"}, {"key": "deals_sum", "label": "Сделки, ₽", "kind": "money"}, {"key": "upd", "label": "УПД, шт", "kind": "num"}]}, {"title": "KPI 2–3. Счета", "metrics": [{"key": "invoices_cnt", "label": "Счета выст., шт", "kind": "num"}, {"key": "invoices_paid_cnt", "label": "Счета опл., шт", "kind": "num"}, {"key": "invoices_sum", "label": "Счета выст., ₽", "kind": "money"}, {"key": "invoices_paid_sum", "label": "Счета опл., ₽", "kind": "money"}]}, {"title": "KPI 4. Лиды", "metrics": [{"key": "leads", "label": "Лиды созданные, шт", "kind": "num"}, {"key": "leads_converted", "label": "Лиды сконвертир., шт", "kind": "num"}]}, {"title": "KPI 5. Договоры", "metrics": [{"key": "contracts_init", "label": "Договоры иниц., шт", "kind": "num"}, {"key": "contracts_signed", "label": "Договоры подп., шт", "kind": "num"}]}, {"title": "KPI 6. Звонки", "metrics": [{"key": "calls", "label": "Звонки, шт", "kind": "num"}, {"key": "calls_30", "label": "Звонки >30с, шт", "kind": "num"}, {"key": "calls_60", "label": "Звонки >60с, шт", "kind": "num"}, {"key": "talk_time_sec", "label": "Время на линии, сек (месяц)", "kind": "num"}]}, {"title": "KPI 7. Wazzup", "metrics": [{"key": "wazzup_msg", "label": "Wazzup сообщения, шт", "kind": "num"}, {"key": "wazzup_dlg", "label": "Wazzup диалоги, шт", "kind": "num"}]}, {"title": "KPI 8. Email", "metrics": [{"key": "email_in", "label": "Email вх., шт", "kind": "num"}, {"key": "email_out", "label": "Email исх., шт", "kind": "num"}]}];
     let CFG = null;
     let NW = new Set();
 
@@ -129,21 +150,121 @@
       el.className = "msg show " + (ok ? "ok" : "err");
     }
 
-    function renderFields(revenue) {
-      const box = document.getElementById("fields");
-      box.innerHTML = "";
-      (CFG.managers || []).forEach((m) => {
-        const key = m.rnp_key;
-        const wrap = document.createElement("div");
-        wrap.className = "mgr";
-        const val = revenue[key];
-        wrap.innerHTML =
-          '<div class="name">' + key + '</div>' +
-          '<div><div class="field-label">План ₽</div>' +
-          '<input type="number" min="0" step="1000" data-key="' + key + '" value="' +
-          (val == null || val === "" ? "" : val) + '" /></div>';
-        box.appendChild(wrap);
+    function allMetricKeys() {
+      const keys = [];
+      SECTIONS.forEach(s => s.metrics.forEach(m => keys.push(m.key)));
+      return keys;
+    }
+
+    function normalizePlan(raw) {
+      const metrics = {};
+      const undef = new Set();
+      allMetricKeys().forEach(k => { metrics[k] = {}; });
+
+      if (raw && raw.metrics && typeof raw.metrics === "object") {
+        Object.keys(raw.metrics).forEach(k => {
+          metrics[k] = Object.assign({}, raw.metrics[k] || {});
+        });
+      }
+      // legacy
+      if (raw && raw.revenue_plan) {
+        metrics.revenue = Object.assign(metrics.revenue || {}, raw.revenue_plan);
+      }
+      if (CFG && CFG.yaml_fallback && (!raw || !raw.metrics) && !raw?.revenue_plan) {
+        metrics.revenue = Object.assign({}, CFG.yaml_fallback);
+      } else if (CFG && CFG.yaml_fallback && Object.keys(metrics.revenue || {}).length === 0) {
+        metrics.revenue = Object.assign({}, CFG.yaml_fallback);
+      }
+
+      const listed = Array.isArray(raw && raw.undefined_metrics) ? raw.undefined_metrics : null;
+      if (listed) {
+        listed.forEach(k => undef.add(k));
+      } else {
+        // новый месяц: всё кроме выручки — «не определён», пока не задали
+        allMetricKeys().forEach(k => {
+          if (k === "revenue") return;
+          const vals = Object.values(metrics[k] || {});
+          const has = vals.some(v => v != null && v !== "");
+          if (!has) undef.add(k);
+        });
+      }
+      return { metrics, undefined_metrics: [...undef] };
+    }
+
+    function renderForm(state) {
+      const host = document.getElementById("sections");
+      host.innerHTML = "";
+      const undef = new Set(state.undefined_metrics || []);
+      SECTIONS.forEach(sec => {
+        const box = document.createElement("div");
+        box.className = "sec";
+        box.innerHTML = "<h3>" + sec.title + "</h3>";
+        sec.metrics.forEach(m => {
+          const isUndef = undef.has(m.key);
+          const block = document.createElement("div");
+          block.className = "metric" + (isUndef ? " undef" : "");
+          block.dataset.key = m.key;
+          const head = document.createElement("div");
+          head.className = "metric-head";
+          head.innerHTML =
+            '<div class="lab">' + m.label + '</div>' +
+            '<label class="chk"><input type="checkbox" data-undef="' + m.key + '"' +
+            (isUndef ? " checked" : "") + ' /> План не определён</label>';
+          block.appendChild(head);
+          const mgrs = document.createElement("div");
+          mgrs.className = "mgrs";
+          (CFG.managers || []).forEach(mgr => {
+            const key = mgr.rnp_key;
+            const row = document.createElement("div");
+            row.className = "mgr";
+            const val = (state.metrics[m.key] || {})[key];
+            row.innerHTML =
+              '<div class="name">' + key + '</div>' +
+              '<input type="number" min="0" step="' + (m.kind === "money" ? "1000" : "1") +
+              '" data-metric="' + m.key + '" data-mgr="' + key + '" value="' +
+              (val == null || val === "" ? "" : val) + '"' +
+              (isUndef ? " disabled" : "") + " />";
+            mgrs.appendChild(row);
+          });
+          block.appendChild(mgrs);
+          box.appendChild(block);
+        });
+        host.appendChild(box);
       });
+
+      host.querySelectorAll("input[data-undef]").forEach(chk => {
+        chk.addEventListener("change", () => {
+          const key = chk.getAttribute("data-undef");
+          const block = host.querySelector('.metric[data-key="' + key + '"]');
+          const on = chk.checked;
+          if (block) block.classList.toggle("undef", on);
+          host.querySelectorAll('input[data-metric="' + key + '"]').forEach(inp => {
+            inp.disabled = on;
+          });
+        });
+      });
+    }
+
+    function collectState() {
+      const metrics = {};
+      const undefined_metrics = [];
+      allMetricKeys().forEach(k => { metrics[k] = {}; });
+      document.querySelectorAll("input[data-undef]").forEach(chk => {
+        if (chk.checked) undefined_metrics.push(chk.getAttribute("data-undef"));
+      });
+      const undef = new Set(undefined_metrics);
+      document.querySelectorAll("input[data-metric]").forEach(inp => {
+        const mk = inp.dataset.metric;
+        const mgr = inp.dataset.mgr;
+        if (undef.has(mk)) return;
+        if (inp.value === "") return;
+        metrics[mk][mgr] = Number(inp.value);
+      });
+      // убрать пустые объекты метрик
+      Object.keys(metrics).forEach(k => {
+        if (!Object.keys(metrics[k]).length) delete metrics[k];
+      });
+      return { metrics, undefined_metrics };
     }
 
     function ghHeaders() {
@@ -174,8 +295,8 @@
       const ym = document.getElementById("month").value;
       if (!ym) return;
       const wd = workDays(ym);
-      let revenue = Object.assign({}, CFG.yaml_fallback || {});
-      let source = "yaml_fallback";
+      let raw = null;
+      let source = "new";
       let updated = "—";
       const path = "data/warehouse/plans/" + ym + ".json";
       try {
@@ -186,10 +307,9 @@
         if (r.status === 200) {
           const j = await r.json();
           const text = decodeURIComponent(escape(atob(String(j.content || "").replace(/\n/g, ""))));
-          const plan = JSON.parse(text);
-          Object.assign(revenue, plan.revenue_plan || {});
+          raw = JSON.parse(text);
           source = "file";
-          updated = plan.updated_at || "файл есть";
+          updated = raw.updated_at || "файл есть";
         } else if (r.status !== 404) {
           const j = await r.json().catch(() => ({}));
           throw new Error(j.message || ("GitHub " + r.status));
@@ -197,11 +317,12 @@
       } catch (e) {
         show(msg, String(e.message || e), false);
       }
+      const state = normalizePlan(raw);
       document.getElementById("meta").innerHTML =
         "<span>Рабочих дней: <strong>" + wd + "</strong></span>" +
         "<span>Источник: <strong>" + source + "</strong></span>" +
         "<span>Обновлено: <strong>" + updated + "</strong></span>";
-      renderFields(revenue);
+      renderForm(state);
     }
 
     document.getElementById("unlock").onclick = async () => {
@@ -225,17 +346,16 @@
       if (!CFG) { show(msg, "Сначала введите пароль", false); return; }
       const ym = document.getElementById("month").value;
       if (!ym) { show(msg, "Выберите месяц", false); return; }
-      const revenue_plan = {};
-      document.querySelectorAll("#fields input[data-key]").forEach((inp) => {
-        if (inp.value === "") return;
-        revenue_plan[inp.dataset.key] = Number(inp.value);
-      });
+      const state = collectState();
       const payload = {
         month: ym,
-        revenue_plan,
         work_days: workDays(ym),
         updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
-        source: "plans_pages"
+        source: "plans_pages",
+        undefined_metrics: state.undefined_metrics,
+        metrics: state.metrics,
+        // legacy mirror for старых сборщиков
+        revenue_plan: state.metrics.revenue || {}
       };
       const path = "data/warehouse/plans/" + ym + ".json";
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2) + "\n")));
