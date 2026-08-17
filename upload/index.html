@@ -21,7 +21,7 @@
     .sub { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
     .card {
       background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
-      box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
+      box-sizing:border-box; box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
     }
     .field-label {
       display:block; font-size:11px; font-weight:700; text-transform:uppercase;
@@ -54,7 +54,7 @@
 <body>
   <div class="wrap">
     <h1>Загрузка 1С</h1>
-    <p class="sub">Пароль → выбрать XLSX → отправить. Дубли документов не создаются.</p>
+    <p class="sub">Пароль → выбрать XLSX → на Mac. Разбор и витрина — локально.</p>
 
     <div class="card" id="gate">
       <div class="field-label">Пароль</div>
@@ -72,24 +72,26 @@
         </select>
 
         <div class="field-label">Файл Excel (.xlsx)</div>
-        <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats.spreadsheetml.sheet" />
         <div id="fname">Файл не выбран</div>
 
-        <button type="button" id="send">Отправить</button>
+        <button type="button" id="send">Отправить на Mac</button>
         <div class="msg" id="msg"></div>
       </div>
       <div class="card hint">
-        Файл уходит в private-репозиторий. Через 1–3 минуты Actions разберёт его в РНП.
+        Нужен запущенный локальный hub на этом компьютере
+        (<code>scripts/local_hub.sh</code> → порт 8787). С телефона/другого ПК не сработает.
       </div>
     </div>
   </div>
 
   <script>
-    const SALT_B64 = 'GAG7fby3iZ2Yh/HMYBYtXA==';
-    const IV_B64 = 's7wBaBqRBH6bvjxm';
-    const DATA_B64 = '8UUuAq/3+G7LxOgLAcc/O3Otsv1y/zyirTZguC6iUCZc/DiMCt6yiNtLgLc4ayO+pH5XJtdOgmXEgRVQnc8s/m3atk24l2QAmBFxV4saC1iI1ZP/WBPABlnl48YR294UX4PE2ILZiv5n6SCzeLGJMzOmKcnOnc2N3zJtU0mlXQuaup6cVUQfko2Z5lQhxekN957y++upQoDBcjutgR30pSH8NVv+KA/gacZZbEMXuvoHCVtan3o=';
+    const SALT_B64 = 'FBJYgqVbFBE9CKlwE/8dvQ==';
+    const IV_B64 = 'qvaL9Bm5eecNKoYn';
+    const DATA_B64 = 'YP80VGn8eEFm4y5iqvfJQDM6HhjHCH3Ic8tN7SME8haDxz0FbT216U6ROT4IYujsm7OpUYPsK44pAe28ocezPQReX70x';
     const ITERATIONS = 200000;
     let CFG = null;
+    let PASS = "";
 
     const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
@@ -109,7 +111,8 @@
       const key = await deriveKey(password, b64(SALT_B64));
       const plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(IV_B64) }, key, b64(DATA_B64));
       CFG = JSON.parse(new TextDecoder().decode(plain));
-      if (!CFG || !CFG.token || !CFG.repo) throw new Error("bad config");
+      if (!CFG || !CFG.api) throw new Error("bad config");
+      PASS = password;
       document.getElementById("gate").style.display = "none";
       document.getElementById("app").style.display = "block";
     }
@@ -139,15 +142,6 @@
       fname.textContent = f ? (f.name + " · " + (f.size/1024).toFixed(1) + " КБ") : "Файл не выбран";
     });
 
-    function toB64(bytes) {
-      let s = "";
-      const chunk = 0x8000;
-      for (let i = 0; i < bytes.length; i += chunk) {
-        s += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-      }
-      return btoa(s);
-    }
-
     document.getElementById("send").onclick = async () => {
       const msg = document.getElementById("msg");
       msg.className = "msg";
@@ -155,37 +149,27 @@
       const file = fileInput.files && fileInput.files[0];
       if (!file) { show(msg, "Выберите файл .xlsx", false); return; }
       const kind = document.getElementById("kind").value;
-      const stamp = new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+Z$/, "Z");
-      const safe = file.name.replace(/[^\w.\- ()\u0400-\u04FF]+/g, "_");
-      const path = "data/inbox/1c/" + kind + "/" + stamp + "__" + safe;
       const btn = document.getElementById("send");
       btn.disabled = true; btn.textContent = "Отправка…";
       try {
-        const buf = new Uint8Array(await file.arrayBuffer());
-        if (buf.byteLength > 25 * 1024 * 1024) throw new Error("Файл больше 25 МБ");
-        const body = {
-          message: "upload(1c): " + safe,
-          content: toB64(buf),
-          branch: CFG.branch || "main"
-        };
-        const r = await fetch("https://api.github.com/repos/" + CFG.repo + "/contents/" + path, {
-          method: "PUT",
-          headers: {
-            "Authorization": "Bearer " + CFG.token,
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28"
-          },
-          body: JSON.stringify(body)
-        });
+        if (file.size > 25 * 1024 * 1024) throw new Error("Файл больше 25 МБ");
+        const fd = new FormData();
+        fd.append("password", PASS);
+        fd.append("kind", kind);
+        fd.append("file", file, file.name);
+        const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/upload", { method: "POST", body: fd });
         const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j.message || ("GitHub " + r.status));
-        show(msg, "Готово:\n" + path + "\nЧерез пару минут данные в РНП.", true);
+        if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
+        show(msg, "Готово на Mac:\n" + (j.path || "") + "\n" + (j.hint || ""), true);
         fileInput.value = "";
         fname.textContent = "Файл не выбран";
       } catch (e) {
-        show(msg, String(e.message || e), false);
+        const m = String(e.message || e);
+        show(msg, m.includes("Failed to fetch")
+          ? "Mac hub не отвечает. Запустите scripts/local_hub.sh на этом компьютере."
+          : m, false);
       } finally {
-        btn.disabled = false; btn.textContent = "Отправить";
+        btn.disabled = false; btn.textContent = "Отправить на Mac";
       }
     };
   </script>
