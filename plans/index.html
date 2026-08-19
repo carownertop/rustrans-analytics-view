@@ -75,14 +75,29 @@
     .msg.ok { color:#1b7f4e; }
     .msg.err { color:var(--red); }
     .hint { font-size:12px; color:var(--muted); line-height:1.45; }
+    .tabs { display:flex; gap:8px; margin:0 0 14px; }
+    .tabs button {
+      width:auto; flex:1; background:#fff; color:var(--navy); border:1px solid #c9d3e0;
+      padding:10px 12px; font-size:13px;
+    }
+    .tabs button.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .team-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .team-table th, .team-table td { border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:middle; }
+    .team-table th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    .team-table input[type=text], .team-table input[type=date], .team-table input[type=number] {
+      width:100%; margin:0; padding:8px 10px; border-radius:8px; font-size:12px;
+    }
+    .team-table select { width:100%; padding:8px; border-radius:8px; border:1px solid #c9d3e0; font:inherit; font-size:12px; }
+    .panel { display:none; }
+    .panel.active { display:block; }
     #gate { display:block; }
     #app { display:none; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Планы МОП</h1>
-    <p class="sub">Пароль → месяц → планы по метрикам РНП. Цвет в РНП = % от плана (норма дня = план ÷ рабочие дни). «План не определён» — без цвета.</p>
+    <h1>Ввод данных МОП</h1>
+    <p class="sub">Планы на месяц и состав команды (даты найма/увольнения). Один справочник — планы и аналитика подхватывают сами.</p>
 
     <div class="card" id="gate">
       <div class="field-label">Пароль</div>
@@ -92,31 +107,61 @@
     </div>
 
     <div id="app">
-      <div class="card">
-        <div class="field-label">Месяц</div>
-        <input id="month" type="month" />
-        <button type="button" class="secondary" id="reload">Загрузить месяц</button>
-        <div class="meta" id="meta">—</div>
-        <div id="sections"></div>
-        <button type="button" id="save">Сохранить</button>
-        <div class="msg" id="msg"></div>
+      <div class="tabs">
+        <button type="button" class="active" data-tab="plans">Планы</button>
+        <button type="button" data-tab="team">Состав команды</button>
       </div>
+
+      <div class="panel active" id="panel-plans">
+        <div class="card">
+          <div class="field-label">Месяц</div>
+          <input id="month" type="month" />
+          <button type="button" class="secondary" id="reload">Загрузить месяц</button>
+          <div class="meta" id="meta">—</div>
+          <div id="sections"></div>
+          <button type="button" id="save">Сохранить планы</button>
+          <div class="msg" id="msg"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-team">
+        <div class="card">
+          <p class="hint" style="margin-top:0">Кто работает в каком периоде. Увольнение — дата «по». Технически выключить дубль — снять «вкл».</p>
+          <div style="overflow-x:auto">
+            <table class="team-table">
+              <thead>
+                <tr>
+                  <th>Имя</th><th>Ключ РНП</th><th>Роль</th><th>Bitrix ID</th>
+                  <th>С</th><th>По</th><th>Вкл</th>
+                </tr>
+              </thead>
+              <tbody id="team-body"></tbody>
+            </table>
+          </div>
+          <button type="button" class="secondary" id="team-add" style="margin-top:12px">+ Добавить сотрудника</button>
+          <button type="button" id="team-save">Сохранить состав</button>
+          <div class="msg" id="team-msg"></div>
+        </div>
+      </div>
+
       <div class="card hint">
-        Форма на GitHub Pages шлёт планы на VPS (<code>/p</code>).
-        Файлы в <code>data/warehouse/plans/</code> на сервере; витрина публикуется на GitHub.
+        Форма на GitHub Pages шлёт данные на VPS (<code>/p</code>).
+        Состав пишется в <code>config/analytics.yaml</code>; планы — в <code>data/warehouse/plans/</code>.
       </div>
     </div>
   </div>
 
   <script>
-    const SALT_B64 = 'A0TLjwvLq0A898afeyV3vg==';
-    const IV_B64 = 'IKw3Ye1MW6LmCExw';
-    const DATA_B64 = '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';
+    const SALT_B64 = 'kaRyN7aq6iCWtAw134mPLA==';
+    const IV_B64 = 'I/m/rpklBKZ5Nzp4';
+    const DATA_B64 = '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';
     const ITERATIONS = 200000;
     const SECTIONS = [{"title": "KPI 0. Выручка", "metrics": [{"key": "revenue", "label": "Выручка по реализациям, ₽", "kind": "money"}]}, {"title": "KPI 1. Сделки / УПД", "metrics": [{"key": "deals_cnt", "label": "Сделки, шт", "kind": "num"}, {"key": "deals_sum", "label": "Сделки, ₽", "kind": "money"}, {"key": "upd", "label": "УПД, шт", "kind": "num"}]}, {"title": "KPI 2–3. Счета", "metrics": [{"key": "invoices_cnt", "label": "Счета выст., шт", "kind": "num"}, {"key": "invoices_paid_cnt", "label": "Счета опл., шт", "kind": "num"}, {"key": "invoices_sum", "label": "Счета выст., ₽", "kind": "money"}, {"key": "invoices_paid_sum", "label": "Счета опл., ₽", "kind": "money"}]}, {"title": "KPI 4. Лиды", "metrics": [{"key": "leads", "label": "Лиды созданные, шт", "kind": "num"}, {"key": "leads_converted", "label": "Лиды сконвертир., шт", "kind": "num"}]}, {"title": "KPI 5. Договоры", "metrics": [{"key": "contracts_init", "label": "Договоры иниц., шт", "kind": "num"}, {"key": "contracts_signed", "label": "Договоры подп., шт", "kind": "num"}]}, {"title": "KPI 6. Звонки", "metrics": [{"key": "calls", "label": "Звонки, шт", "kind": "num"}, {"key": "calls_30", "label": "Звонки 30–60с, шт", "kind": "num"}, {"key": "calls_60", "label": "Звонки >60с, шт", "kind": "num"}, {"key": "talk_time_sec", "label": "Время на линии, сек (месяц)", "kind": "num"}]}, {"title": "KPI 7. Wazzup", "metrics": [{"key": "wazzup_msg", "label": "Wazzup сообщения, шт", "kind": "num"}, {"key": "wazzup_dlg", "label": "Wazzup диалоги, шт", "kind": "num"}]}, {"title": "KPI 8. Email", "metrics": [{"key": "email_in", "label": "Email вх., шт", "kind": "num"}, {"key": "email_out", "label": "Email исх., шт", "kind": "num"}]}];
     let CFG = null;
     let NW = new Set();
     let PASS = "";
+    let LIVE_MANAGERS = [];
+    let TEAM_ROWS = [];
 
     const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
@@ -214,7 +259,7 @@
           block.appendChild(head);
           const mgrs = document.createElement("div");
           mgrs.className = "mgrs";
-          (CFG.managers || []).forEach(mgr => {
+          (LIVE_MANAGERS.length ? LIVE_MANAGERS : (CFG.managers || [])).forEach(mgr => {
             const key = mgr.rnp_key;
             const row = document.createElement("div");
             row.className = "mgr";
@@ -296,11 +341,33 @@
       }
       PASS = password;
       NW = new Set(CFG.non_working_dates || []);
+      LIVE_MANAGERS = CFG.managers || [];
       const now = new Date();
       const ym = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
       document.getElementById("month").value = ym;
       document.getElementById("gate").style.display = "none";
       document.getElementById("app").style.display = "block";
+      if (CFG.api) {
+        try {
+          const br = await fetch(CFG.api.replace(/\/$/, "") + "/api/bootstrap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: PASS })
+          });
+          const bj = await br.json().catch(() => ({}));
+          if (br.ok) {
+            if (bj.default_month) document.getElementById("month").value = bj.default_month;
+            if (Array.isArray(bj.managers) && bj.managers.length) {
+              LIVE_MANAGERS = bj.managers;
+              CFG.managers = bj.managers;
+            }
+            if (Array.isArray(bj.team)) {
+              TEAM_ROWS = bj.team;
+              renderTeam();
+            }
+          }
+        } catch (e) { /* month load will surface errors */ }
+      }
       await loadMonth();
     }
 
@@ -327,6 +394,10 @@
           });
           const j = await r.json().catch(() => ({}));
           if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
+          if (Array.isArray(j.managers) && j.managers.length) {
+            LIVE_MANAGERS = j.managers;
+            CFG.managers = j.managers;
+          }
           raw = {
             metrics: j.metrics || {},
             undefined_metrics: j.undefined_metrics || [],
@@ -391,6 +462,99 @@
       loadMonth();
     });
     document.getElementById("month").addEventListener("change", () => loadMonth());
+
+    document.querySelectorAll(".tabs button").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.getAttribute("data-tab");
+        document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+        document.getElementById("panel-" + tab).classList.add("active");
+        if (tab === "team" && CFG && CFG.api) {
+          try {
+            const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/team", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password: PASS })
+            });
+            const j = await r.json().catch(() => ({}));
+            if (r.ok && Array.isArray(j.team)) {
+              TEAM_ROWS = j.team;
+              renderTeam();
+            }
+          } catch (e) {}
+        }
+      });
+    });
+
+    function renderTeam() {
+      const body = document.getElementById("team-body");
+      body.innerHTML = "";
+      (TEAM_ROWS || []).forEach((t, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td><input type="text" data-f="name" data-i="' + idx + '" value="' + (t.name || "") + '" /></td>' +
+          '<td><input type="text" data-f="rnp_key" data-i="' + idx + '" value="' + (t.rnp_key || "") + '" /></td>' +
+          '<td><select data-f="role" data-i="' + idx + '">' +
+            '<option value="mop"' + (t.role === "mop" ? " selected" : "") + '>mop</option>' +
+            '<option value="head"' + (t.role === "head" ? " selected" : "") + '>head</option>' +
+          '</select></td>' +
+          '<td><input type="number" data-f="bitrix_id" data-i="' + idx + '" value="' + (t.bitrix_id || "") + '" /></td>' +
+          '<td><input type="date" data-f="employment_from" data-i="' + idx + '" value="' + (t.employment_from || "") + '" /></td>' +
+          '<td><input type="date" data-f="employment_to" data-i="' + idx + '" value="' + (t.employment_to || "") + '" /></td>' +
+          '<td><input type="checkbox" data-f="enabled" data-i="' + idx + '"' + (t.enabled === false ? "" : " checked") + ' /></td>';
+        body.appendChild(tr);
+      });
+    }
+
+    function collectTeam() {
+      const rows = JSON.parse(JSON.stringify(TEAM_ROWS || []));
+      document.querySelectorAll("#team-body [data-f]").forEach(el => {
+        const i = +el.getAttribute("data-i");
+        const f = el.getAttribute("data-f");
+        if (!rows[i]) return;
+        if (f === "enabled") rows[i][f] = el.checked;
+        else if (f === "bitrix_id") rows[i][f] = Number(el.value || 0);
+        else rows[i][f] = el.value || null;
+      });
+      return rows;
+    }
+
+    document.getElementById("team-add").onclick = () => {
+      TEAM_ROWS = collectTeam();
+      TEAM_ROWS.push({
+        bitrix_id: 0, name: "", rnp_key: "", role: "mop",
+        enabled: true, employment_from: "", employment_to: null,
+        aliases: [], onec_names: []
+      });
+      renderTeam();
+    };
+
+    document.getElementById("team-save").onclick = async () => {
+      const msg = document.getElementById("team-msg");
+      msg.className = "msg";
+      if (!CFG || !CFG.api) { show(msg, "Состав команды сохраняется только через VPS API", false); return; }
+      const team = collectTeam();
+      const btn = document.getElementById("team-save");
+      btn.disabled = true; btn.textContent = "Сохранение…";
+      try {
+        const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/team/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: PASS, team, rebuild: true })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
+        TEAM_ROWS = j.team || team;
+        renderTeam();
+        await loadMonth();
+        show(msg, "Состав сохранён. Аналитика пересобрана." + (j.rebuild_ok === false ? "\nRebuild: " + (j.rebuild_error || "") : ""), true);
+      } catch (e) {
+        show(msg, String(e.message || e), false);
+      } finally {
+        btn.disabled = false; btn.textContent = "Сохранить состав";
+      }
+    };
 
     document.getElementById("save").onclick = async () => {
       const msg = document.getElementById("msg");
