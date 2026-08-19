@@ -54,7 +54,7 @@
 <body>
   <div class="wrap">
     <h1>Загрузка 1С</h1>
-    <p class="sub">Пароль → выбрать XLSX → на Mac. Разбор и витрина — локально.</p>
+    <p class="sub">Пароль → выбрать XLSX → на сервер. Разбор и публикация витрины на GitHub — на VPS.</p>
 
     <div class="card" id="gate">
       <div class="field-label">Пароль</div>
@@ -75,20 +75,19 @@
         <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats.spreadsheetml.sheet" />
         <div id="fname">Файл не выбран</div>
 
-        <button type="button" id="send">Отправить на Mac</button>
+        <button type="button" id="send">Отправить на сервер</button>
         <div class="msg" id="msg"></div>
       </div>
       <div class="card hint">
-        Нужен запущенный локальный hub на этом компьютере
-        (<code>scripts/local_hub.sh</code> → порт 8787). С телефона/другого ПК не сработает.
+        Форма на GitHub Pages шлёт файл на VPS (<code>/u</code>). После разбора витрина публикуется сюда же.
       </div>
     </div>
   </div>
 
   <script>
-    const SALT_B64 = 'OWQ4fyQV0nQqWVO0vJCuyw==';
-    const IV_B64 = 'IM4DdAmEDo6dOWhQ';
-    const DATA_B64 = 'xav+Fqs5V2KdNyz8H/V6aL6twFN6ygaePeJLOIHG7TfsTl/EWqnPoOEvm40gIjvcCJVGsDnOiqPQ0Q7x2fHvnEkPgLTOCbc=';
+    const SALT_B64 = 'lC2TH4V83Q8QpBVxWxUqZg==';
+    const IV_B64 = 'wxyxGj9h2lIxW57O';
+    const DATA_B64 = 'EQJKPDqzDpLhzBux57o5smhAPz11xk1p1UxW6xrMgWr4kHEKThmRTfI0RYzuIGhy6BmjGutJlG4eKkE/QEtpxSy9pnAWTdOK0G+0wuJDnL/o';
     const ITERATIONS = 200000;
     let CFG = null;
     let PASS = "";
@@ -160,16 +159,16 @@
         const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/upload", { method: "POST", body: fd });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
-        show(msg, "Готово на Mac:\n" + (j.path || "") + "\n" + (j.hint || ""), true);
+        show(msg, "Готово на сервере:\n" + (j.path || "") + "\n" + (j.hint || ""), true);
         fileInput.value = "";
         fname.textContent = "Файл не выбран";
       } catch (e) {
         const m = String(e.message || e);
         show(msg, m.includes("Failed to fetch")
-          ? "Mac hub не отвечает. Запустите scripts/local_hub.sh на этом компьютере."
+          ? "Сервер не отвечает. Проверьте VPS API / сеть."
           : m, false);
       } finally {
-        btn.disabled = false; btn.textContent = "Отправить на Mac";
+        btn.disabled = false; btn.textContent = "Отправить на сервер";
       }
     };
   </script>
