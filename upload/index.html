@@ -85,30 +85,31 @@
   </div>
 
   <script>
-    const SALT_B64 = 'R8+A5/DRUN6czp8qRQ0kOw==';
-    const IV_B64 = 'o+zXOY5Rponk9rlm';
-    const DATA_B64 = 'SVJlCPkz4uT/mRdQwPgvWPogonsfFogoTmeZNeMVI0ozk8lK0jiJRsb6XWje43hLsxW1vaUXrLzoxSlMrr89xG+Fhorz3Rj8P5tw3itYCgj9';
+    const BLOBS = [{"salt": "/iYdkYSzxG+Uk3/eLcKrlA==", "iv": "J+SJhQ9r5tjo7Xhi", "data": "db6M1oDGf7dE5u0H271isXypRZaKVldsbfXgoSqKzJ0ldWZo9v7O71t6yDQPltkPN+FzVXey5OBtCJtn+qnuwTkdQeJU0AhHI89u1pAFTg/z", "cookie": "rtl_manage_pw"}, {"salt": "LwZGJt61TjaRwj60j9O1hA==", "iv": "R3WY2v/SHju6djj8", "data": "OWJ5Iq5+ZYsOXwmTyN9UOahQgrhxn2L+B1745WommPIFqMQyzfAvufQk/pxRvCQj1fi8wg9WWle33QOxfDxDj22QoBeQuKZKMJfFCu0GpTk4", "cookie": "rtl_hub_pw"}];
     const ITERATIONS = 200000;
     let CFG = null;
     let PASS = "";
     const REMEMBER_DAYS = 7;
-    const PW_COOKIE = "rtl_manage_pw";
-    function setPwCookie(pw) {
+    const PW_COOKIES = ["rtl_manage_pw", "rtl_hub_pw"];
+
+    function setPwCookie(pw, cookieName) {
       const maxAge = REMEMBER_DAYS * 24 * 60 * 60;
       const secure = location.protocol === "https:" ? "; Secure" : "";
-      document.cookie = PW_COOKIE + "=" + encodeURIComponent(pw)
+      document.cookie = cookieName + "=" + encodeURIComponent(pw)
         + "; Max-Age=" + maxAge + "; Path=/; SameSite=Lax" + secure;
     }
-    function getPwCookie() {
+    function getPwCookie(name) {
       const parts = document.cookie.split(";");
       for (const raw of parts) {
         const p = raw.trim();
-        if (p.startsWith(PW_COOKIE + "=")) return decodeURIComponent(p.slice(PW_COOKIE.length + 1));
+        if (p.startsWith(name + "=")) return decodeURIComponent(p.slice(name.length + 1));
       }
       return "";
     }
-    function clearPwCookie() {
-      document.cookie = PW_COOKIE + "=; Max-Age=0; Path=/; SameSite=Lax";
+    function clearPwCookies() {
+      PW_COOKIES.forEach(name => {
+        document.cookie = name + "=; Max-Age=0; Path=/; SameSite=Lax";
+      });
     }
 
     const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -126,14 +127,26 @@
     }
 
     async function unlock(password) {
-      const key = await deriveKey(password, b64(SALT_B64));
-      const plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(IV_B64) }, key, b64(DATA_B64));
-      CFG = JSON.parse(new TextDecoder().decode(plain));
-      if (!CFG || !CFG.api) throw new Error("bad config");
-      PASS = password;
-      setPwCookie(password);
-      document.getElementById("gate").style.display = "none";
-      document.getElementById("app").style.display = "block";
+      let lastErr = null;
+      for (const blob of BLOBS) {
+        try {
+          const key = await deriveKey(password, b64(blob.salt));
+          const plain = await crypto.subtle.decrypt(
+            { name:"AES-GCM", iv:b64(blob.iv) }, key, b64(blob.data)
+          );
+          CFG = JSON.parse(new TextDecoder().decode(plain));
+          if (!CFG || !CFG.api) throw new Error("bad config");
+          PASS = password;
+          const cookieName = blob.cookie || "rtl_manage_pw";
+          setPwCookie(password, cookieName);
+          document.getElementById("gate").style.display = "none";
+          document.getElementById("app").style.display = "block";
+          return;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error("bad password");
     }
 
     function show(el, text, ok) {
@@ -147,7 +160,7 @@
       try {
         await unlock(document.getElementById("password").value);
       } catch (e) {
-        clearPwCookie();
+        clearPwCookies();
         show(el, "Неверный пароль", false);
       }
     };
@@ -156,9 +169,11 @@
     });
 
     (async () => {
-      const saved = getPwCookie();
-      if (!saved) return;
-      try { await unlock(saved); } catch (e) { clearPwCookie(); }
+      for (const name of PW_COOKIES) {
+        const saved = getPwCookie(name);
+        if (!saved) continue;
+        try { await unlock(saved); return; } catch (e) { /* try next */ }
+      }
     })();
 
     const fileInput = document.getElementById("file");
