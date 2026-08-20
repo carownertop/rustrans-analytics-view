@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
-  <title>Загрузка 1С · Rustrans</title>
+  <title>Управление · Rustrans</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet" />
   <style>
     :root { --navy:#0b1c33; --red:#e30613; --muted:#5b6b7c; --line:#d9e0ea; }
@@ -16,83 +16,88 @@
         linear-gradient(165deg, #f7f9fc, #e8eef6 55%, #f3f6fa);
       padding:28px 16px;
     }
-    .wrap { width:min(640px,100%); margin:0 auto; }
+    .wrap { width:min(560px,100%); margin:0 auto; }
     h1 { margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:-.03em; }
     .sub { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
     .card {
       background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
-      box-sizing:border-box; box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
+      box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
     }
     .field-label {
       display:block; font-size:11px; font-weight:700; text-transform:uppercase;
       letter-spacing:.04em; color:var(--muted); margin:0 0 6px;
     }
-    input[type=password], select, button, input[type=file] { font:inherit; }
-    input[type=password], select {
+    input[type=password], button { font:inherit; }
+    input[type=password] {
       width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
       margin-bottom:12px; background:#fbfcfe; font-weight:600;
     }
-    input[type=file] {
-      width:100%; margin:0 0 12px; padding:10px; border:1px solid #c9d3e0;
-      border-radius:12px; background:#fbfcfe;
-    }
-    button {
+    button.unlock {
       width:100%; border:0; border-radius:12px; padding:13px 18px;
       background:var(--navy); color:#fff; font-weight:700; cursor:pointer;
     }
-    button:disabled { opacity:.55; cursor:wait; }
     .msg { margin-top:12px; font-size:13px; font-weight:600; display:none; white-space:pre-wrap; }
     .msg.show { display:block; }
-    .msg.ok { color:#1b7f4e; }
     .msg.err { color:var(--red); }
-    .hint { font-size:12px; color:var(--muted); line-height:1.45; }
     #gate { display:block; }
     #app { display:none; }
-    #fname { margin:0 0 12px; font-size:13px; font-weight:700; }
+    .links { display:flex; flex-direction:column; gap:10px; }
+    .links a {
+      display:block; text-decoration:none; color:var(--navy);
+      border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+      background:#fbfcfe; transition:border-color .15s, background .15s;
+    }
+    .links a:hover { border-color:#aeb9c8; background:#fff; }
+    .links .t { font-size:15px; font-weight:800; letter-spacing:-.02em; }
+    .links .d { margin-top:4px; font-size:12px; color:var(--muted); line-height:1.4; }
+    .back {
+      display:inline-block; margin-top:8px; font-size:12px; font-weight:700;
+      color:var(--muted); text-decoration:none;
+    }
+    .back:hover { color:var(--navy); }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Загрузка 1С</h1>
-    <p class="sub">Пароль → выбрать XLSX → на сервер. Разбор и публикация витрины на GitHub — на VPS.</p>
+    <h1>Управление</h1>
+    <p class="sub">Планы, состав команды и загрузка выгрузок 1С. Отдельный пароль от аналитики.</p>
 
     <div class="card" id="gate">
       <div class="field-label">Пароль</div>
       <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-      <button type="button" id="unlock">Войти</button>
+      <button type="button" class="unlock" id="unlock">Войти</button>
       <div class="msg" id="gate-msg"></div>
     </div>
 
     <div id="app">
       <div class="card">
-        <div class="field-label">Тип выгрузки</div>
-        <select id="kind">
-          <option value="realizations">Реализации</option>
-          <option value="payments">Оплаты</option>
-        </select>
-
-        <div class="field-label">Файл Excel (.xlsx)</div>
-        <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats.spreadsheetml.sheet" />
-        <div id="fname">Файл не выбран</div>
-
-        <button type="button" id="send">Отправить на сервер</button>
-        <div class="msg" id="msg"></div>
-      </div>
-      <div class="card hint">
-        Форма на GitHub Pages шлёт файл на VPS (<code>/u</code>). После разбора витрина публикуется сюда же.
+        <div class="links">
+          <a href="../plans/">
+            <div class="t">Планы / факт</div>
+            <div class="d">Месячные планы по метрикам РНП для менеджеров.</div>
+          </a>
+          <a href="../plans/#team">
+            <div class="t">Менеджеры / состав команды</div>
+            <div class="d">Приём, увольнение, роли и даты работы в аналитике.</div>
+          </a>
+          <a href="../upload/">
+            <div class="t">Загрузка 1С</div>
+            <div class="d">Выгрузки реализаций и оплат (.xlsx) на сервер.</div>
+          </a>
+        </div>
+        <a class="back" href="../">← К аналитике</a>
       </div>
     </div>
   </div>
 
   <script>
-    const SALT_B64 = 'T9iPKw8BWPtxKyM0jg0wtg==';
-    const IV_B64 = 'udsne5ybcnoR+kTy';
-    const DATA_B64 = '5nRisPvzPNyMg7Vqkwq3bfwLWEBpAXcpGofcAD4BDVWUKeR5MnyU0ZiX96kaTjxcyBUX9D7nE5+694+FyJV64hPAbNeSKi0DEMAvdoJG1AlE';
+    const SALT_B64 = '1A87FaVnv/uv5YjktB9m4g==';
+    const IV_B64 = 'PnYWEwHhHZd2Xt6G';
+    const DATA_B64 = '3ahkEfIyarBpKKgsiLZqpYLgykeeAdNL0KfmiGemKIhVGUYb9Q1ilcqkamz+HA==';
     const ITERATIONS = 200000;
-    let CFG = null;
-    let PASS = "";
     const REMEMBER_DAYS = 7;
     const PW_COOKIE = "rtl_manage_pw";
+
     function setPwCookie(pw) {
       const maxAge = REMEMBER_DAYS * 24 * 60 * 60;
       const secure = location.protocol === "https:" ? "; Secure" : "";
@@ -128,17 +133,16 @@
     async function unlock(password) {
       const key = await deriveKey(password, b64(SALT_B64));
       const plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(IV_B64) }, key, b64(DATA_B64));
-      CFG = JSON.parse(new TextDecoder().decode(plain));
-      if (!CFG || !CFG.api) throw new Error("bad config");
-      PASS = password;
+      const cfg = JSON.parse(new TextDecoder().decode(plain));
+      if (!cfg || cfg.ok !== true) throw new Error("bad config");
       setPwCookie(password);
       document.getElementById("gate").style.display = "none";
       document.getElementById("app").style.display = "block";
     }
 
-    function show(el, text, ok) {
+    function show(el, text) {
       el.textContent = text;
-      el.className = "msg show " + (ok ? "ok" : "err");
+      el.className = "msg show err";
     }
 
     document.getElementById("unlock").onclick = async () => {
@@ -148,7 +152,7 @@
         await unlock(document.getElementById("password").value);
       } catch (e) {
         clearPwCookie();
-        show(el, "Неверный пароль", false);
+        show(el, "Неверный пароль");
       }
     };
     document.getElementById("password").addEventListener("keydown", (e) => {
@@ -160,44 +164,6 @@
       if (!saved) return;
       try { await unlock(saved); } catch (e) { clearPwCookie(); }
     })();
-
-    const fileInput = document.getElementById("file");
-    const fname = document.getElementById("fname");
-    fileInput.addEventListener("change", () => {
-      const f = fileInput.files && fileInput.files[0];
-      fname.textContent = f ? (f.name + " · " + (f.size/1024).toFixed(1) + " КБ") : "Файл не выбран";
-    });
-
-    document.getElementById("send").onclick = async () => {
-      const msg = document.getElementById("msg");
-      msg.className = "msg";
-      if (!CFG) { show(msg, "Сначала введите пароль", false); return; }
-      const file = fileInput.files && fileInput.files[0];
-      if (!file) { show(msg, "Выберите файл .xlsx", false); return; }
-      const kind = document.getElementById("kind").value;
-      const btn = document.getElementById("send");
-      btn.disabled = true; btn.textContent = "Отправка…";
-      try {
-        if (file.size > 25 * 1024 * 1024) throw new Error("Файл больше 25 МБ");
-        const fd = new FormData();
-        fd.append("password", PASS);
-        fd.append("kind", kind);
-        fd.append("file", file, file.name);
-        const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/upload", { method: "POST", body: fd });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
-        show(msg, "Готово на сервере:\n" + (j.path || "") + "\n" + (j.hint || ""), true);
-        fileInput.value = "";
-        fname.textContent = "Файл не выбран";
-      } catch (e) {
-        const m = String(e.message || e);
-        show(msg, m.includes("Failed to fetch")
-          ? "Сервер не отвечает. Проверьте VPS API / сеть."
-          : m, false);
-      } finally {
-        btn.disabled = false; btn.textContent = "Отправить на сервер";
-      }
-    };
   </script>
 </body>
 </html>
