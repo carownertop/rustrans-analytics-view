@@ -49,10 +49,16 @@
     #gate { display:block; }
     #app { display:none; }
     #fname { margin:0 0 12px; font-size:13px; font-weight:700; }
+    .topnav { display:flex; justify-content:flex-end; margin:0 0 10px; }
+    .to-analytics {
+      font-size:12px; font-weight:700; color:var(--muted); text-decoration:none;
+    }
+    .to-analytics:hover { color:var(--navy); }
   </style>
 </head>
 <body>
   <div class="wrap">
+    <div class="topnav"><a class="to-analytics" href="../">← К аналитике</a></div>
     <h1>Загрузка 1С</h1>
     <p class="sub">Пароль → выбрать XLSX → на сервер. Разбор и публикация витрины на GitHub — на VPS.</p>
 
@@ -85,8 +91,8 @@
   </div>
 
   <script>
-    const BLOBS = [{"salt": "lyzxLCcuX3sDYVzD1mX01Q==", "iv": "t44+YlGQCsvZteDU", "data": "2O1YUBh4XOQrqMRGEUM7qORl8MWgSqgTbfotNrjIUMJIB54r4s3n/AuV9v2n4P3zYmh1+2YzHaiIL9trWCRVnku6qfzxV232YNugPPAtEcqO", "cookie": "rtl_manage_pw"}, {"salt": "HpOqYxBje5jKpPF5WJTeWw==", "iv": "B6YER/aJcIX/Xu3P", "data": "PAuhPU9K0xrBC2f19A12ounp3vdJYh/eKK5zOOdfZsWr8jwrjQTGOV061ubWDSa5i0Lm0LqWCKmXu7+ATOShvY05mS4HEf+gSeQ1rNQgg4o1", "cookie": "rtl_hub_pw"}];
-    const ITERATIONS = 200000;
+    const BLOBS = [{"salt": "Keuu2q6K2FTL1fBjsA9zDQ==", "iv": "a0NmrAUZT+RztbGd", "data": "XcNa4GxJmBsq6rTZ0HsDuJBgAdr3m3l+rHIqB1UkjgTXJRagBGZ1FzPTDNlov+aNZNlZmsnv6KBouJmxEP9vb+18DM3z2xF4B4C09gPLggJq", "cookie": "rtl_manage_pw"}, {"salt": "XapjgMLh7RysLsAJhrD8dA==", "iv": "MnMWzlHP8hX4aOFw", "data": "lL8K75Dm9HB9mUILidtfJ9hBeuyCHxUQmn1w570aid+TKdJxAKYIffIcRSAwNibq17O3CxhhBCWqqRlq6tHXJpwbJWZsv8rbVZdIl4bh6pw1", "cookie": "rtl_hub_pw"}];
+    const ITERATIONS = 50000;
     let CFG = null;
     let PASS = "";
     const REMEMBER_DAYS = 7;

@@ -55,10 +55,16 @@
       color:var(--muted); text-decoration:none;
     }
     .back:hover { color:var(--navy); }
+    .topnav { display:flex; justify-content:flex-end; margin:0 0 10px; }
+    .to-analytics {
+      font-size:12px; font-weight:700; color:var(--muted); text-decoration:none;
+    }
+    .to-analytics:hover { color:var(--navy); }
   </style>
 </head>
 <body>
   <div class="wrap">
+    <div class="topnav"><a class="to-analytics" href="../">← К аналитике</a></div>
     <h1>Управление</h1>
     <p class="sub">Планы, состав команды и загрузка выгрузок 1С. Отдельный пароль от аналитики.</p>
 
@@ -91,10 +97,10 @@
   </div>
 
   <script>
-    const SALT_B64 = 'LA35RkI/TySI8Es8Bd427Q==';
-    const IV_B64 = 'NvBOQ1K/07ZJrfD4';
-    const DATA_B64 = '6KbzNkVs0DFSIeQFXob0MgNVpfU2iLDUnfYYSsCX/4VgrVEFU5GejZ9ti429Dw==';
-    const ITERATIONS = 200000;
+    const SALT_B64 = 'XDwQYbPCgLuXde0uHi7feA==';
+    const IV_B64 = '2Nr1/FA5ehccB3ko';
+    const DATA_B64 = 'I43yHkp8DHiSObvb8MVpYAX6mHQYk6y7ZxgqtiWAmgbuhK2UCdDJyxTjDk8u0A==';
+    const ITERATIONS = 50000;
     const REMEMBER_DAYS = 7;
     const PW_COOKIE = "rtl_manage_pw";
 
