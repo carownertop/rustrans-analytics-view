@@ -5,93 +5,209 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
   <title>Загрузка 1С · Rustrans</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    :root { --navy:#0b1c33; --red:#e30613; --muted:#5b6b7c; --line:#d9e0ea; }
+    :root {
+      --navy:#0b1c33; --navy-2:#132744; --red:#e30613; --muted:#5b6b7c;
+      --line:#d9e0ea; --ok:#1b7f4e; --ok-bg:#e7f6ee; --err-bg:#fdecea;
+      --ease:cubic-bezier(0.23, 1, 0.32, 1);
+    }
     * { box-sizing:border-box; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration:0.01ms !important;
+        transition-duration:0.01ms !important;
+      }
+    }
     body {
       margin:0; min-height:100vh; font-family:Montserrat,system-ui,sans-serif; color:var(--navy);
       background:
-        radial-gradient(900px 420px at 12% -10%, rgba(227,6,19,.10), transparent 55%),
+        radial-gradient(900px 420px at 8% -8%, rgba(227,6,19,.11), transparent 52%),
+        radial-gradient(700px 380px at 96% 0%, rgba(11,28,51,.10), transparent 48%),
         linear-gradient(165deg, #f7f9fc, #e8eef6 55%, #f3f6fa);
-      padding:28px 16px;
+      padding:32px 16px 48px;
     }
-    .wrap { width:min(640px,100%); margin:0 auto; }
-    h1 { margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:-.03em; }
-    .sub { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
-    .card {
-      background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
-      box-sizing:border-box; box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
-    }
-    .field-label {
-      display:block; font-size:11px; font-weight:700; text-transform:uppercase;
-      letter-spacing:.04em; color:var(--muted); margin:0 0 6px;
-    }
-    input[type=password], select, button, input[type=file] { font:inherit; }
-    input[type=password], select {
-      width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
-      margin-bottom:12px; background:#fbfcfe; font-weight:600;
-    }
-    input[type=file] {
-      width:100%; margin:0 0 12px; padding:10px; border:1px solid #c9d3e0;
-      border-radius:12px; background:#fbfcfe;
-    }
-    button {
-      width:100%; border:0; border-radius:12px; padding:13px 18px;
-      background:var(--navy); color:#fff; font-weight:700; cursor:pointer;
-    }
-    button:disabled { opacity:.55; cursor:wait; }
-    .msg { margin-top:12px; font-size:13px; font-weight:600; display:none; white-space:pre-wrap; }
-    .msg.show { display:block; }
-    .msg.ok { color:#1b7f4e; }
-    .msg.err { color:var(--red); }
-    .hint { font-size:12px; color:var(--muted); line-height:1.45; }
-    #gate { display:block; }
-    #app { display:none; }
-    #fname { margin:0 0 12px; font-size:13px; font-weight:700; }
+    .wrap { width:min(560px,100%); margin:0 auto; }
     .topnav { display:flex; justify-content:flex-end; margin:0 0 10px; }
     .to-analytics {
       font-size:12px; font-weight:700; color:var(--muted); text-decoration:none;
+      transition:color .18s ease;
     }
     .to-analytics:hover { color:var(--navy); }
+    .brand { display:flex; align-items:baseline; gap:10px; margin:0 0 6px; }
+    h1 { margin:0; font-size:26px; font-weight:800; letter-spacing:-.03em; }
+    .pill {
+      font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--navy); background:rgba(11,28,51,.06); border-radius:999px; padding:4px 9px;
+    }
+    .sub { margin:0 0 20px; color:var(--muted); font-size:13px; line-height:1.5; }
+    .card {
+      background:#fff; border:1px solid var(--line); border-radius:20px; padding:22px;
+      box-shadow:0 18px 44px rgba(11,28,51,.07);
+      animation:rise .45s var(--ease) both;
+    }
+    .card + .card { margin-top:12px; animation-delay:.06s; }
+    @keyframes rise {
+      from { opacity:0; transform:translateY(10px); }
+      to { opacity:1; transform:none; }
+    }
+    label.field, .field-label {
+      display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.04em; color:var(--muted); margin:0 0 6px;
+    }
+    input[type=password], select {
+      width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
+      font:inherit; font-size:14px; font-weight:600; margin-bottom:14px; background:#fbfcfe;
+      transition:border-color .18s ease, box-shadow .18s ease;
+    }
+    input[type=password]:focus, select:focus {
+      outline:none; border-color:#8fa3bd;
+      box-shadow:0 0 0 3px rgba(11,28,51,.08);
+    }
+    .drop {
+      border:2px dashed #b7c4d6; border-radius:16px; padding:30px 18px; text-align:center;
+      background:linear-gradient(180deg,#f8fafc,#f3f6fa); cursor:pointer;
+      transition:border-color .2s var(--ease), background .2s ease, transform .2s var(--ease);
+    }
+    .drop:hover { border-color:#8fa3bd; }
+    .drop.drag { border-color:var(--navy); background:#eef3f9; transform:scale(1.01); }
+    .drop.has-files { border-style:solid; border-color:rgba(11,28,51,.18); background:#f7fafc; }
+    .drop strong { display:block; font-size:14px; font-weight:800; }
+    .drop span { display:block; margin-top:6px; color:var(--muted); font-size:12px; line-height:1.4; }
+    .flist { list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
+    .flist:empty { display:none; }
+    .flist li {
+      display:flex; align-items:center; gap:10px; justify-content:space-between;
+      padding:9px 11px; border-radius:12px; background:#f4f7fb; border:1px solid rgba(19,39,68,.06);
+      animation:rise .3s var(--ease) both; font-size:12px; font-weight:600;
+    }
+    .flist .meta { min-width:0; flex:1; }
+    .flist .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--navy); }
+    .flist .sz { color:var(--muted); font-weight:500; font-size:11px; margin-top:2px; }
+    .flist .rm {
+      flex:0 0 auto; border:0; background:transparent; color:var(--muted);
+      font:inherit; font-size:11px; font-weight:700; cursor:pointer; padding:4px 6px; border-radius:8px;
+    }
+    .flist .rm:hover { color:var(--red); background:var(--err-bg); }
+    button.primary, #unlock, #send {
+      margin-top:4px; width:100%; border:0; border-radius:12px; padding:13px 14px;
+      background:linear-gradient(180deg,#132744,var(--navy)); color:#fff;
+      font:inherit; font-weight:700; cursor:pointer;
+      box-shadow:0 8px 20px rgba(11,28,51,.18);
+      transition:transform .14s var(--ease), opacity .18s ease, box-shadow .18s ease;
+    }
+    button.primary:hover:not(:disabled), #unlock:hover:not(:disabled), #send:hover:not(:disabled) {
+      transform:translateY(-1px); box-shadow:0 12px 26px rgba(11,28,51,.22);
+    }
+    button.primary:disabled, #unlock:disabled, #send:disabled { opacity:.55; cursor:wait; transform:none; box-shadow:none; }
+    .adv { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+    .adv-toggle {
+      display:flex; align-items:center; gap:8px; width:100%;
+      border:0; background:transparent; padding:4px 0; cursor:pointer;
+      font:inherit; font-size:12px; font-weight:700; color:var(--muted); text-align:left;
+    }
+    .adv-toggle:hover { color:var(--navy); }
+    .chev {
+      width:16px; height:16px; border-radius:5px; background:#eef2f7;
+      display:inline-flex; align-items:center; justify-content:center;
+      transition:transform .22s var(--ease); font-size:10px; color:var(--navy);
+    }
+    .adv.open .chev { transform:rotate(90deg); }
+    .adv-body {
+      display:grid; grid-template-rows:0fr; transition:grid-template-rows .28s var(--ease);
+      opacity:0;
+    }
+    .adv.open .adv-body {
+      grid-template-rows:1fr; opacity:1;
+      transition:grid-template-rows .28s var(--ease), opacity .2s ease .05s;
+    }
+    .adv-body > div { overflow:hidden; }
+    .adv-note { margin:8px 0 10px; font-size:11px; color:var(--muted); line-height:1.45; }
+    .adv.open select { margin-bottom:0; }
+    .msg {
+      margin-top:14px; font-size:13px; font-weight:600; display:none;
+      white-space:pre-wrap; line-height:1.45;
+      border-radius:12px; padding:12px 14px;
+      animation:rise .35s var(--ease) both;
+    }
+    .msg.show { display:block; }
+    .msg.ok { color:var(--ok); background:var(--ok-bg); border:1px solid rgba(27,127,78,.2); }
+    .msg.err { color:var(--red); background:var(--err-bg); border:1px solid rgba(227,6,19,.22); }
+    .msg.warn { color:#8a5a00; background:#fff7e6; border:1px solid rgba(180,120,0,.22); }
+    .toast {
+      position:fixed; right:16px; bottom:16px; z-index:40;
+      max-width:min(360px, calc(100vw - 32px));
+      padding:12px 14px; border-radius:14px; font-size:13px; font-weight:700;
+      box-shadow:0 14px 36px rgba(11,28,51,.18);
+      transform:translateY(12px); opacity:0; pointer-events:none;
+      transition:opacity .25s var(--ease), transform .25s var(--ease);
+    }
+    .toast.show { opacity:1; transform:none; pointer-events:auto; }
+    .toast.ok { background:#123524; color:#dff5e8; }
+    .toast.err { background:#5c1010; color:#ffe3e3; }
+    .hint { font-size:12px; color:var(--muted); line-height:1.5; }
+    code { font-size:11px; background:#eef2f7; padding:1px 5px; border-radius:4px; }
+    #gate { display:block; }
+    #app { display:none; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topnav"><a class="to-analytics" href="../">← К аналитике</a></div>
-    <h1>Загрузка 1С</h1>
-    <p class="sub">Пароль → выбрать XLSX → на сервер. Разбор и публикация витрины на GitHub — на VPS.</p>
+    <div class="brand">
+      <h1>Загрузка 1С</h1>
+      <span class="pill">xlsx</span>
+    </div>
+    <p class="sub">Войдите паролем, затем киньте одну или несколько выгрузок — тип (реализации / оплаты) определится сам.</p>
 
     <div class="card" id="gate">
-      <div class="field-label">Пароль</div>
+      <label class="field" for="password">Пароль</label>
       <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-      <button type="button" id="unlock">Войти</button>
+      <button type="button" class="primary" id="unlock">Войти</button>
       <div class="msg" id="gate-msg"></div>
     </div>
 
     <div id="app">
       <div class="card">
-        <div class="field-label">Тип выгрузки</div>
-        <select id="kind">
-          <option value="realizations">Реализации</option>
-          <option value="payments">Оплаты</option>
-        </select>
+        <label class="field">Файлы</label>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Выбрать файлы">
+          <strong>Перетащите XLSX сюда</strong>
+          <span>можно несколько · или нажмите, чтобы выбрать · до 25 МБ каждый</span>
+          <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple hidden />
+        </div>
+        <ul class="flist" id="flist" aria-live="polite"></ul>
 
-        <div class="field-label">Файл Excel (.xlsx)</div>
-        <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats.spreadsheetml.sheet" />
-        <div id="fname">Файл не выбран</div>
+        <div class="adv" id="adv">
+          <button type="button" class="adv-toggle" id="advToggle" aria-expanded="false">
+            <span class="chev">›</span>
+            <span>Ручной тип · если авто не сработал</span>
+          </button>
+          <div class="adv-body">
+            <div>
+              <p class="adv-note">По умолчанию тип определяется по содержимому. Ручной режим — только если нужно принудительно указать тип для всей пачки.</p>
+              <label class="field" for="kind">Тип для всей пачки</label>
+              <select id="kind" name="kind">
+                <option value="auto" selected>Авто (рекомендуется)</option>
+                <option value="realizations">Принудительно: реализации</option>
+                <option value="payments">Принудительно: оплаты</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-        <button type="button" id="send">Отправить на сервер</button>
-        <div class="msg" id="msg"></div>
+        <button type="button" class="primary" id="send" style="margin-top:14px">Загрузить и разобрать</button>
+        <div class="msg" id="msg" role="status"></div>
       </div>
       <div class="card hint">
-        Форма на GitHub Pages шлёт файл на VPS (<code>/u</code>). После разбора витрина публикуется сюда же.
+        Форма на GitHub Pages шлёт файлы на VPS (<code>/u</code>). Неизвестный файл отклоняется с ошибкой ниже и во всплывающем уведомлении.
       </div>
     </div>
   </div>
 
+  <div class="toast" id="toast" role="alert"></div>
+
   <script>
-    const BLOBS = [{"salt": "Keuu2q6K2FTL1fBjsA9zDQ==", "iv": "a0NmrAUZT+RztbGd", "data": "XcNa4GxJmBsq6rTZ0HsDuJBgAdr3m3l+rHIqB1UkjgTXJRagBGZ1FzPTDNlov+aNZNlZmsnv6KBouJmxEP9vb+18DM3z2xF4B4C09gPLggJq", "cookie": "rtl_manage_pw"}, {"salt": "XapjgMLh7RysLsAJhrD8dA==", "iv": "MnMWzlHP8hX4aOFw", "data": "lL8K75Dm9HB9mUILidtfJ9hBeuyCHxUQmn1w570aid+TKdJxAKYIffIcRSAwNibq17O3CxhhBCWqqRlq6tHXJpwbJWZsv8rbVZdIl4bh6pw1", "cookie": "rtl_hub_pw"}];
+    const BLOBS = [{"salt": "qcPOhPEEyh+S6xw9MXerIQ==", "iv": "W9aLJHA3vFqb+reA", "data": "fw7rZejEdxubIqDvcjTx9xbMNUDPDHyVB3IogrvpUy/M+991U+C79896w1Rq9RV3utLd0rpR52figGkRXa3aHYu7u7LWXjhGrI1tR8ScZD7F", "cookie": "rtl_manage_pw"}, {"salt": "KwbI+iluZOGug60wlZy8CQ==", "iv": "p9pjv9/kaKM5OOb4", "data": "G5eEHYUAHoNPMH5MNf5LxeON0999ZJZrOBDJLTuZYBlo0mQ7ca0XLjEf1GrR95u6mgbM7q9L+/9XQabPADKipM8OsQpzrEs6vC3wE4rnxjm8", "cookie": "rtl_hub_pw"}];
     const ITERATIONS = 50000;
     let CFG = null;
     let PASS = "";
@@ -155,9 +271,18 @@
       throw lastErr || new Error("bad password");
     }
 
-    function show(el, text, ok) {
+    function show(el, text, type) {
       el.textContent = text;
-      el.className = "msg show " + (ok ? "ok" : "err");
+      el.className = "msg show " + (type || "err");
+    }
+
+    const toast = document.getElementById("toast");
+    let toastTimer = null;
+    function showToast(text, type) {
+      toast.className = "toast show " + type;
+      toast.textContent = text;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.classList.remove("show"); }, 4200);
     }
 
     document.getElementById("unlock").onclick = async () => {
@@ -167,7 +292,8 @@
         await unlock(document.getElementById("password").value);
       } catch (e) {
         clearPwCookies();
-        show(el, "Неверный пароль", false);
+        show(el, "Неверный пароль", "err");
+        showToast("Неверный пароль", "err");
       }
     };
     document.getElementById("password").addEventListener("keydown", (e) => {
@@ -182,41 +308,101 @@
       }
     })();
 
+    const drop = document.getElementById("drop");
     const fileInput = document.getElementById("file");
-    const fname = document.getElementById("fname");
-    fileInput.addEventListener("change", () => {
-      const f = fileInput.files && fileInput.files[0];
-      fname.textContent = f ? (f.name + " · " + (f.size/1024).toFixed(1) + " КБ") : "Файл не выбран";
+    const flist = document.getElementById("flist");
+    const adv = document.getElementById("adv");
+    const advToggle = document.getElementById("advToggle");
+    const kindSel = document.getElementById("kind");
+    /** @type {File[]} */
+    let chosen = [];
+
+    function fmtSize(n) {
+      if (n < 1024) return n + " Б";
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " КБ";
+      return (n / 1024 / 1024).toFixed(1) + " МБ";
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+    function renderList() {
+      drop.classList.toggle("has-files", chosen.length > 0);
+      flist.innerHTML = chosen.map((f, i) => `
+        <li>
+          <div class="meta">
+            <div class="nm">${escapeHtml(f.name)}</div>
+            <div class="sz">${fmtSize(f.size)}</div>
+          </div>
+          <button type="button" class="rm" data-i="${i}" aria-label="Убрать">убрать</button>
+        </li>`).join("");
+    }
+    function addFiles(fileList) {
+      const arr = Array.from(fileList || []);
+      for (const f of arr) {
+        const low = (f.name || "").toLowerCase();
+        if (!low.endsWith(".xlsx") && !low.endsWith(".xls")) continue;
+        if (chosen.some(x => x.name === f.name && x.size === f.size && x.lastModified === f.lastModified)) continue;
+        chosen.push(f);
+      }
+      renderList();
+    }
+
+    flist.addEventListener("click", e => {
+      const t = e.target.closest(".rm");
+      if (!t) return;
+      chosen.splice(+t.dataset.i, 1);
+      renderList();
+    });
+    drop.addEventListener("click", () => fileInput.click());
+    drop.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
+    });
+    fileInput.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
+    drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("drag"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+    drop.addEventListener("drop", e => {
+      e.preventDefault(); drop.classList.remove("drag");
+      addFiles(e.dataTransfer.files);
+    });
+    advToggle.addEventListener("click", () => {
+      const open = adv.classList.toggle("open");
+      advToggle.setAttribute("aria-expanded", open ? "true" : "false");
     });
 
     document.getElementById("send").onclick = async () => {
       const msg = document.getElementById("msg");
       msg.className = "msg";
-      if (!CFG) { show(msg, "Сначала введите пароль", false); return; }
-      const file = fileInput.files && fileInput.files[0];
-      if (!file) { show(msg, "Выберите файл .xlsx", false); return; }
-      const kind = document.getElementById("kind").value;
+      if (!CFG) { show(msg, "Сначала введите пароль", "err"); showToast("Нужен вход", "err"); return; }
+      if (!chosen.length) { show(msg, "Выберите хотя бы один файл .xlsx", "err"); showToast("Нет файлов", "err"); return; }
       const btn = document.getElementById("send");
-      btn.disabled = true; btn.textContent = "Отправка…";
+      btn.disabled = true;
+      btn.textContent = chosen.length > 1 ? ("Отправка " + chosen.length + "…") : "Отправка…";
       try {
-        if (file.size > 25 * 1024 * 1024) throw new Error("Файл больше 25 МБ");
+        for (const f of chosen) {
+          if (f.size > 25 * 1024 * 1024) throw new Error("«" + f.name + "» больше 25 МБ");
+        }
         const fd = new FormData();
         fd.append("password", PASS);
-        fd.append("kind", kind);
-        fd.append("file", file, file.name);
+        fd.append("kind", kindSel.value || "auto");
+        for (const f of chosen) fd.append("files", f, f.name);
         const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/upload", { method: "POST", body: fd });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
-        show(msg, "Готово на сервере:\n" + (j.path || "") + "\n" + (j.hint || ""), true);
-        fileInput.value = "";
-        fname.textContent = "Файл не выбран";
+        const summary = j.summary || (("Готово: " + (j.path || "")) + (j.hint ? ("\n" + j.hint) : ""));
+        const type = j.partial ? "warn" : "ok";
+        show(msg, summary + (j.hint && j.summary ? ("\n\n" + j.hint) : ""), type);
+        showToast(j.partial ? "Часть файлов с ошибкой" : "Загрузка успешна", j.partial ? "err" : "ok");
+        chosen = [];
+        renderList();
       } catch (e) {
         const m = String(e.message || e);
         show(msg, m.includes("Failed to fetch")
           ? "Сервер не отвечает. Проверьте VPS API / сеть."
-          : m, false);
+          : m, "err");
+        showToast("Ошибка загрузки", "err");
       } finally {
-        btn.disabled = false; btn.textContent = "Отправить на сервер";
+        btn.disabled = false;
+        btn.textContent = "Загрузить и разобрать";
       }
     };
   </script>
