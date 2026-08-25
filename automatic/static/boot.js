@@ -1,6 +1,7 @@
 (function () {
   const API = String(window.RTL_API || "").replace(/\/$/, "");
   const KEY = "rtl_web_password";
+  const TTL = 7 * 24 * 60 * 60;
   window.RTL_API = API;
 
   function url(path) {
@@ -8,6 +9,35 @@
     return API ? API + "/" + p : p;
   }
   window.rtlUrl = url;
+
+  function cookiePath() {
+    const match = location.pathname.match(/^(.*\/automatic)(?:\/|$)/);
+    return match ? match[1] : "/";
+  }
+
+  function cookieSuffix() {
+    const secure = location.protocol === "https:" ? "; Secure" : "";
+    return "; Path=" + cookiePath() + "; SameSite=Lax" + secure;
+  }
+
+  function readPassword() {
+    const prefix = KEY + "=";
+    for (const part of document.cookie.split(";")) {
+      const item = part.trim();
+      if (item.startsWith(prefix)) return decodeURIComponent(item.slice(prefix.length));
+    }
+    return sessionStorage.getItem(KEY) || "";
+  }
+
+  function writePassword(password) {
+    document.cookie = KEY + "=" + encodeURIComponent(password) + "; Max-Age=" + TTL + cookieSuffix();
+    sessionStorage.removeItem(KEY);
+  }
+
+  function clearPassword() {
+    document.cookie = KEY + "=; Max-Age=0" + cookieSuffix();
+    sessionStorage.removeItem(KEY);
+  }
 
   function basic(password) {
     const raw = unescape(encodeURIComponent("u:" + password));
@@ -17,7 +47,7 @@
   function headers(extra) {
     const h = Object.assign({}, extra || {});
     if (!API) return h;
-    const password = sessionStorage.getItem(KEY) || "";
+    const password = readPassword();
     if (password) h.Authorization = basic(password);
     return h;
   }
@@ -56,9 +86,12 @@
     if (!API) return Promise.resolve();
     if (unlocking) return unlocking;
     unlocking = (async () => {
-      const saved = sessionStorage.getItem(KEY) || "";
-      if (saved && await probe(saved)) return;
-      sessionStorage.removeItem(KEY);
+      const saved = readPassword();
+      if (saved && await probe(saved)) {
+        writePassword(saved);
+        return;
+      }
+      clearPassword();
       const gate = gateCard();
       gate.hidden = false;
       const form = document.getElementById("rtl-gate-form");
@@ -75,7 +108,7 @@
             err.hidden = false;
             return;
           }
-          sessionStorage.setItem(KEY, password);
+          writePassword(password);
           gate.hidden = true;
           resolve();
         };
@@ -89,7 +122,7 @@
     await unlock();
     const res = await fetch(url(path), Object.assign({}, opts, { headers: headers(opts.headers) }));
     if (API && res.status === 401) {
-      sessionStorage.removeItem(KEY);
+      clearPassword();
       await unlock();
       return fetch(url(path), Object.assign({}, opts, { headers: headers(opts.headers) }));
     }
