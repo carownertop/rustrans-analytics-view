@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Готовые отчёты · Рустранс</title>
+  <title>Сбор автоматических отчётов · Рустранс</title>
   <base href="./" />
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="static/brand.css?v=kpi" />
+  <link rel="stylesheet" href="static/brand.css?v=hub" />
+  <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
+  <script src="static/boot.js?v=hub"></script>
 </head>
 <body>
   <header class="head">
@@ -16,30 +18,82 @@
         <div class="brand">
           <img class="logo" src="static/logo.png" alt="Рустранс-Логистик" />
           <div>
-            <h1>Готовые отчёты</h1>
-            <p class="caption">Витрина с VPS · файлы копируются с сервера, пайплайн в git не кладём</p>
+            <h1>Сбор автоматических отчётов</h1>
+            <p class="caption">Excel из выгрузок 1С · повторная сборка не затирает прошлый файл</p>
           </div>
         </div>
       </div>
-      <nav class="nav" id="ready-tabs">
-        <button type="button" class="nav-pill on" data-ready="plan">План продаж<span class="n" data-count="plan"></span></button>
-        <button type="button" class="nav-pill" data-ready="segmentation">Сегментация<span class="n" data-count="segmentation"></span></button>
-        <button type="button" class="nav-pill" data-ready="dynamics">Динамика<span class="n" data-count="dynamics"></span></button>
+      <nav class="nav" id="main-tabs">
+        <button type="button" class="nav-pill on" data-panel="build">Сборка</button>
+        <button type="button" class="nav-pill" data-panel="ready">Готовые</button>
       </nav>
       <div class="head-foot">
-        <span class="fresh" id="fresh"></span>
-        <div class="ghosts">
-          <a class="ghost" href="https://141-105-71-134.sslip.io/a/">сборка на сервере</a>
-        </div>
+        <span class="fresh" id="fresh">Срез 1С</span>
+        <div class="ghosts"><a class="ghost" href="backend/">backend</a></div>
       </div>
     </div>
   </header>
 
   <main class="sheet">
     <div class="sheet-inner">
-      <section class="panel on" id="ready">
+      <section class="panel on" id="build">
+        <h2 id="build-title">План продаж</h2>
+        <p class="lead" id="build-lead">Кому звонить и что предложить со склада. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.</p>
+        <nav class="subnav" id="build-tabs">
+          <button type="button" class="sub-pill on" data-build="plan">План продаж</button>
+          <button type="button" class="sub-pill" data-build="segmentation">Сегментация</button>
+        </nav>
+
+        <div class="subpanel on" id="build-plan">
+          <span class="field-label">МОПы</span>
+          <p class="hint" style="margin:0 0 10px">Если ничего не отмечено — соберём всем, кто есть в реализациях.</p>
+          <div class="mops" id="mops"></div>
+          <div class="adv" id="adv-plan">
+            <button type="button" class="adv-toggle" data-adv="adv-plan" aria-expanded="false">
+              <span class="chev">›</span> Дополнительно
+            </button>
+            <div class="adv-body">
+              <div>
+                <p class="adv-note">Дата среза — только если нужен отчёт «как на вчера». По умолчанию берётся последняя сделка.</p>
+                <label class="field-label" for="plan-date">Дата среза</label>
+                <input id="plan-date" type="date" />
+              </div>
+            </div>
+          </div>
+          <button type="button" class="primary" id="plan-btn">Собрать план продаж</button>
+          <div class="msg" id="plan-msg"></div>
+        </div>
+
+        <div class="subpanel" id="build-segmentation">
+          <label class="check"><input type="checkbox" id="seg-company" checked /> Вся компания — сводка и динамика миграции</label>
+          <span class="field-label">МОПы</span>
+          <p class="hint" style="margin:0 0 10px">Сводка и файлы менеджеров собираются независимо. Можно только компания, только МОПы или оба.</p>
+          <div class="mops" id="seg-mops"></div>
+          <div class="adv" id="adv-seg">
+            <button type="button" class="adv-toggle" data-adv="adv-seg" aria-expanded="false">
+              <span class="chev">›</span> Дополнительно
+            </button>
+            <div class="adv-body">
+              <div>
+                <p class="adv-note">Дата среза отсекает сделки после этого дня. Динамика пишется только вместе со сводкой компании.</p>
+                <label class="field-label" for="seg-date">Дата среза</label>
+                <input id="seg-date" type="date" />
+              </div>
+            </div>
+          </div>
+          <button type="button" class="primary" id="seg-btn">Собрать сегментацию</button>
+          <div class="msg" id="seg-msg"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="ready">
         <h2 id="ready-title">План продаж</h2>
-        <p class="lead" id="ready-lead">Скачайте Excel. Это снимок с сервера, не живая папка.</p>
+        <p class="lead" id="ready-lead">Скачайте Excel. Фильтры только внутри этого отчёта.</p>
+        <nav class="subnav" id="ready-tabs">
+          <button type="button" class="sub-pill on" data-ready="plan">План продаж<span class="n" data-count="plan"></span></button>
+          <button type="button" class="sub-pill" data-ready="segmentation">Сегментация<span class="n" data-count="segmentation"></span></button>
+          <button type="button" class="sub-pill" data-ready="dynamics">Динамика<span class="n" data-count="dynamics"></span></button>
+        </nav>
         <div class="filters">
           <div>
             <label class="field-label" for="flt-month">Месяц</label>
@@ -54,23 +108,33 @@
             <select id="flt-manager"><option value="">Все</option></select>
           </div>
         </div>
-        <p class="empty" id="files-empty">Пока пусто.</p>
+        <p class="empty" id="files-empty">Пока пусто. Соберите отчёт во вкладке «Сборка».</p>
         <div id="files"></div>
       </section>
     </div>
   </main>
   <script>
     const KIND_TITLE = { plan: "План продаж", segmentation: "Сегментация", dynamics: "Динамика" };
-    const FILES = [{"name": "План_продаж_Ковалева_Татьяна_Олеговна.xlsx", "kind": "plan", "kind_title": "План продаж", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Ковалева Татьяна Олеговна", "size": 30050, "mtime": "25.08.2026 15:52", "stamp": 1787662349.0}, {"name": "План_продаж_Стукалов_Олег_Вадимович.xlsx", "kind": "plan", "kind_title": "План продаж", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Стукалов Олег Вадимович", "size": 30588, "mtime": "25.08.2026 15:52", "stamp": 1787662347.0}, {"name": "План_продаж_Брежнева_Алена.xlsx", "kind": "plan", "kind_title": "План продаж", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Брежнева Алена", "size": 53737, "mtime": "25.08.2026 15:52", "stamp": 1787662345.0}, {"name": "План_продаж_Зограбян_Артём_Артурович.xlsx", "kind": "plan", "kind_title": "План продаж", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Зограбян Артём Артурович", "size": 114818, "mtime": "25.08.2026 15:52", "stamp": 1787662340.0}, {"name": "Динамика_и_миграция_вся_компания.xlsx", "kind": "dynamics", "kind_title": "Динамика", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Вся компания", "size": 19698, "mtime": "25.08.2026 15:01", "stamp": 1787659284.0}, {"name": "Сегментация_клиентов_Зограбян_Артём_Артурович.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Зограбян Артём Артурович", "size": 39106, "mtime": "25.08.2026 14:59", "stamp": 1787659188.0}, {"name": "Сегментация_клиентов_Ковалева_Татьяна_Олеговна.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Ковалева Татьяна Олеговна", "size": 13360, "mtime": "25.08.2026 14:59", "stamp": 1787659188.0}, {"name": "Сегментация_клиентов_Брежнева_Алена.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Брежнева Алена", "size": 24480, "mtime": "25.08.2026 14:59", "stamp": 1787659188.0}, {"name": "Сегментация_клиентов_Стукалов_Олег_Вадимович.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Стукалов Олег Вадимович", "size": 13554, "mtime": "25.08.2026 14:59", "stamp": 1787659188.0}, {"name": "Сегментация_клиентов_вся_компания_25-08-26.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Вся компания", "size": 63111, "mtime": "25.08.2026 14:59", "stamp": 1787659187.0}];
-    const FRESH = "Срез 1С · Заказы / ЗП: 25.08.2026 · Реализации по менеджерам: 25.08.2026 · Продажи по SKU: 01.08.2026";
-    const PUBLISHED = "25.08.2026 17:53";
+    const BUILD_COPY = {
+      plan: {
+        title: "План продаж",
+        lead: "Кому звонить и что предложить со склада. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.",
+      },
+      segmentation: {
+        title: "Сегментация",
+        lead: "Сводка по всей компании и/или файлы по отдельным МОПам. Динамика пишется только вместе со сводкой компании.",
+      },
+    };
+    let allFiles = [];
     let readyKind = "plan";
 
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
     }
-    document.getElementById("fresh").textContent = [FRESH, PUBLISHED ? "Опубликовано " + PUBLISHED : ""].filter(Boolean).join(" · ");
-
+    function show(el, text, ok) {
+      el.textContent = text;
+      el.className = "msg show " + (ok ? "ok" : "err");
+    }
     function bindPills(root, cls, attr, onChange) {
       const buttons = [...root.querySelectorAll("." + cls)];
       buttons.forEach((btn) => btn.addEventListener("click", () => {
@@ -78,7 +142,17 @@
         onChange(btn.dataset[attr]);
       }));
     }
-    bindPills(document.getElementById("ready-tabs"), "nav-pill", "ready", (id) => {
+
+    bindPills(document.getElementById("main-tabs"), "nav-pill", "panel", (id) => {
+      document.querySelectorAll("#build, #ready").forEach((p) => p.classList.toggle("on", p.id === id));
+      if (id === "ready") renderReady();
+    });
+    bindPills(document.getElementById("build-tabs"), "sub-pill", "build", (id) => {
+      document.querySelectorAll("#build .subpanel").forEach((p) => p.classList.toggle("on", p.id === "build-" + id));
+      document.getElementById("build-title").textContent = BUILD_COPY[id].title;
+      document.getElementById("build-lead").textContent = BUILD_COPY[id].lead;
+    });
+    bindPills(document.getElementById("ready-tabs"), "sub-pill", "ready", (id) => {
       readyKind = id;
       document.getElementById("flt-month").value = "";
       document.getElementById("flt-date").value = "";
@@ -86,8 +160,16 @@
       renderReady();
     });
 
+    document.querySelectorAll(".adv-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const adv = document.getElementById(btn.dataset.adv);
+        const open = adv.classList.toggle("open");
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    });
+
     function kindFiles(kind) {
-      return FILES.filter((f) => f.kind === kind);
+      return allFiles.filter((f) => f.kind === kind);
     }
     function fillSelect(select, items, valueKey, labelKey, current, newestFirst) {
       const seen = new Map();
@@ -130,7 +212,7 @@
       const box = document.getElementById("files");
       if (!kindFiles(readyKind).length) {
         empty.style.display = "block";
-        empty.textContent = "На сервере пока нет файлов «" + KIND_TITLE[readyKind] + "».";
+        empty.textContent = "Пока нет файлов «" + KIND_TITLE[readyKind] + "». Соберите отчёт во вкладке «Сборка».";
         box.innerHTML = "";
         return;
       }
@@ -151,17 +233,102 @@
           <span class="field-label">${escapeHtml(group.title)}</span>
           ${group.files.map((f) => `
             <div class="file-row">
-              <a class="file-link" href="files/${encodeURIComponent(f.name)}">${escapeHtml(f.name)}</a>
+              <a class="file-link" href="${rtlUrl("api/download/" + encodeURIComponent(f.name))}" data-dl="${encodeURIComponent(f.name)}">${escapeHtml(f.name)}</a>
               <span class="meta">${escapeHtml(f.manager)} · ${escapeHtml(f.mtime)}</span>
             </div>
           `).join("")}
         </div>
       `).join("");
     }
+
     ["flt-month", "flt-date", "flt-manager"].forEach((id) => {
       document.getElementById(id).addEventListener("change", renderReady);
     });
-    renderReady();
+
+    function mopHtml(list, name) {
+      return list.map((m) =>
+        `<label><input type="checkbox" name="${name}" value="${escapeHtml(m.name)}" checked /> ${escapeHtml(m.name)}<span class="meta"> · ${m.clients}</span></label>`
+      ).join("") || "<p class='empty'>Нет менеджеров в реализациях. Загрузите выгрузку в backend.</p>";
+    }
+
+    async function loadState() {
+      const res = await rtlFetch("api/state");
+      const body = await res.json();
+      allFiles = body.files || [];
+      document.getElementById("fresh").textContent = body.fresh || "Срез 1С";
+      const managers = body.managers || [];
+      document.getElementById("mops").innerHTML = mopHtml(managers, "mop");
+      document.getElementById("seg-mops").innerHTML = mopHtml(managers, "seg-mop");
+      renderReady();
+    }
+
+    function goReady(kind) {
+      readyKind = kind === "segmentation" ? "segmentation" : kind;
+      document.querySelectorAll("#main-tabs .nav-pill").forEach((b) => b.classList.toggle("on", b.dataset.panel === "ready"));
+      document.getElementById("build").classList.remove("on");
+      document.getElementById("ready").classList.add("on");
+      document.querySelectorAll("#ready-tabs .sub-pill").forEach((b) => b.classList.toggle("on", b.dataset.ready === readyKind));
+      document.getElementById("flt-month").value = "";
+      document.getElementById("flt-date").value = "";
+      document.getElementById("flt-manager").value = "";
+      renderReady();
+    }
+
+    async function buildReport(kind, btn, msg, extra) {
+      msg.className = "msg";
+      btn.disabled = true;
+      const label = btn.textContent;
+      btn.textContent = "Сборка…";
+      try {
+        const res = await rtlFetch("api/build", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind, ...extra }),
+        });
+        const body = await res.json();
+        if (!body.ok) show(msg, body.error || "Не собралось", false);
+        else {
+          show(msg, "Готово.\n" + (body.files || []).map((f) => f.name).join("\n"), true);
+          await loadState();
+          goReady(kind);
+        }
+      } catch (e) {
+        show(msg, "Сервер не отвечает.", false);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    }
+
+    document.getElementById("plan-btn").addEventListener("click", () => {
+      const managers = [...document.querySelectorAll("input[name=mop]:checked")].map((i) => i.value);
+      buildReport("plan", document.getElementById("plan-btn"), document.getElementById("plan-msg"), {
+        managers,
+        report_date: document.getElementById("plan-date").value || null,
+      });
+    });
+    document.getElementById("seg-btn").addEventListener("click", () => {
+      const company = document.getElementById("seg-company").checked;
+      const managers = [...document.querySelectorAll("input[name=seg-mop]:checked")].map((i) => i.value);
+      if (!company && !managers.length) {
+        show(document.getElementById("seg-msg"), "Отметьте сводку по компании или хотя бы одного МОПа.", false);
+        return;
+      }
+      buildReport("segmentation", document.getElementById("seg-btn"), document.getElementById("seg-msg"), {
+        company,
+        managers,
+        report_date: document.getElementById("seg-date").value || null,
+      });
+    });
+
+    document.getElementById("files").addEventListener("click", (e) => {
+      const link = e.target.closest("[data-dl]");
+      if (!link || !window.RTL_API) return;
+      e.preventDefault();
+      rtlDownload(decodeURIComponent(link.dataset.dl)).catch(() => {});
+    });
+
+    (window.rtlReady || Promise.resolve()).then(() => loadState()).catch(() => {});
   </script>
 </body>
 </html>

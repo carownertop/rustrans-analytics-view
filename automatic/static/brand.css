@@ -606,6 +606,44 @@ table.flat th:first-child { z-index: 3; }
 table.flat tbody tr:nth-child(odd) td:first-child { background: #f4f7fb; }
 table.flat tbody tr:nth-child(even) td:first-child { background: #fff; }
 .more { margin-top: 10px; width: auto; padding: 10px 14px; }
+.rtl-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 28, 51, .72);
+}
+.rtl-gate[hidden] { display: none; }
+.rtl-gate-card {
+  width: min(400px, calc(100% - 40px));
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 18px 50px rgba(11, 28, 51, .28);
+}
+.rtl-gate-card h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+.rtl-gate-card p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+.rtl-gate-card input {
+  width: 100%;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.rtl-gate-err { color: var(--red) !important; margin: 10px 0 0 !important; }
 @media (max-width: 720px) {
   .head-top { flex-direction: column; }
   .filters { grid-template-columns: 1fr; }

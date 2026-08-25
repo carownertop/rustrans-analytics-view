@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Бэкэнд · Сбор автоматических отчётов</title>
+  <base href="../" />
+  <link rel="icon" href="static/logo.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="static/brand.css?v=hub" />
+  <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
+  <script src="static/boot.js?v=hub"></script>
+</head>
+<body>
+  <header class="head">
+    <div class="head-inner">
+      <div class="head-top">
+        <div class="brand">
+          <img class="logo" src="static/logo.png" alt="Рустранс-Логистик" />
+          <div>
+            <h1>Бэкэнд</h1>
+            <p class="caption">Загрузка 1С, контроль базы и журнал. Позже сюда же войдут источники вроде Битрикс24.</p>
+          </div>
+        </div>
+      </div>
+      <nav class="nav" id="main-tabs">
+        <button type="button" class="nav-pill on" data-panel="upload">Загрузка</button>
+        <button type="button" class="nav-pill" data-panel="base">База</button>
+        <button type="button" class="nav-pill" data-panel="log">Журнал</button>
+      </nav>
+      <div class="head-foot">
+        <span class="fresh">Служебный контур</span>
+        <div class="ghosts"><a class="ghost" href="./">к отчётам</a></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="sheet">
+    <div class="sheet-inner">
+      <h2 id="page-title">Загрузка 1С</h2>
+      <p class="lead" id="page-lead">Киньте одну или несколько выгрузок — тип (реализации / оплаты / SKU) определится сам. Старые записи не затираются.</p>
+
+      <section class="panel on" id="upload">
+        <span class="field-label">Файлы</span>
+        <div class="drop" id="drop" tabindex="0">
+          <strong>Перетащите XLSX сюда</strong>
+          <span>можно несколько · или нажмите, чтобы выбрать</span>
+          <input id="file" type="file" hidden accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple />
+          <ul class="flist" id="flist"></ul>
+        </div>
+        <button type="button" class="primary" id="send">Загрузить и разобрать</button>
+        <div class="msg" id="msg"></div>
+      </section>
+
+      <section class="panel" id="base">
+        <div class="kpi-tools">
+          <span class="kpi-open" id="kpi-open">открыто 0 из 0</span>
+          <div class="kpi-actions">
+            <button type="button" class="ghost-btn" id="kpi-expand">Развернуть все</button>
+            <button type="button" class="ghost-btn" id="kpi-collapse">Свернуть все</button>
+          </div>
+        </div>
+        <div id="stats"></div>
+      </section>
+
+      <section class="panel" id="log">
+        <div id="journal"></div>
+      </section>
+    </div>
+  </main>
+  <script>
+    const COPY = {
+      upload: { title: "Загрузка 1С", lead: "Киньте одну или несколько выгрузок — тип определится сам. Старые записи не затираются." },
+      base: { title: "Таблицы", lead: "Сводка в полоске, строки внутри. По умолчанию свёрнуто." },
+      log: { title: "Журнал", lead: "Когда что загружалось, какие отчёты собирались, где была ошибка." },
+    };
+    document.querySelectorAll(".nav-pill").forEach((btn) => btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav-pill").forEach((b) => b.classList.toggle("on", b === btn));
+      document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("on", p.id === btn.dataset.panel));
+      const copy = COPY[btn.dataset.panel];
+      document.getElementById("page-title").textContent = copy.title;
+      document.getElementById("page-lead").textContent = copy.lead;
+      if (btn.dataset.panel === "base") loadBase();
+      if (btn.dataset.panel === "log") loadLog();
+    }));
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+    function fmtSize(n) {
+      if (n < 1024) return n + " Б";
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " КБ";
+      return (n / 1024 / 1024).toFixed(1) + " МБ";
+    }
+
+    const drop = document.getElementById("drop");
+    const fileInput = document.getElementById("file");
+    const flist = document.getElementById("flist");
+    let chosen = [];
+
+    function renderList() {
+      drop.classList.toggle("has-files", chosen.length > 0);
+      flist.innerHTML = chosen.map((f, i) => `
+        <li>
+          <div class="meta">
+            <div class="nm">${escapeHtml(f.name)}</div>
+            <div class="sz">${fmtSize(f.size)}</div>
+          </div>
+          <button type="button" class="rm" data-i="${i}">убрать</button>
+        </li>
+      `).join("");
+    }
+    function addFiles(fileList) {
+      for (const f of Array.from(fileList || [])) {
+        const low = (f.name || "").toLowerCase();
+        if (!low.endsWith(".xlsx") && !low.endsWith(".xls")) continue;
+        if (chosen.some((x) => x.name === f.name && x.size === f.size && x.lastModified === f.lastModified)) continue;
+        chosen.push(f);
+      }
+      renderList();
+    }
+
+    flist.addEventListener("click", (e) => {
+      const t = e.target.closest(".rm");
+      if (!t) return;
+      chosen.splice(+t.dataset.i, 1);
+      renderList();
+    });
+    drop.addEventListener("click", (e) => {
+      if (e.target.closest(".rm")) return;
+      fileInput.click();
+    });
+    drop.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
+    });
+    fileInput.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
+    drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("drag"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+    drop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      drop.classList.remove("drag");
+      addFiles(e.dataTransfer.files);
+    });
+
+    document.getElementById("send").addEventListener("click", async () => {
+      const btn = document.getElementById("send");
+      const msg = document.getElementById("msg");
+      msg.className = "msg";
+      if (!chosen.length) {
+        msg.textContent = "Выберите хотя бы один файл .xlsx";
+        msg.className = "msg show err";
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = chosen.length > 1 ? ("Отправка " + chosen.length + "…") : "Отправка…";
+      const data = new FormData();
+      for (const f of chosen) data.append("files", f, f.name);
+      try {
+        const res = await rtlFetch("api/upload", { method: "POST", body: data });
+        const body = await res.json();
+        const items = body.items || [];
+        const failed = items.some((i) => !i.ok);
+        const lines = items.map((item) => item.ok
+          ? item.file + " — " + item.label + ", +" + item.added
+          : item.file + " — " + item.error);
+        msg.textContent = lines.join("\n");
+        msg.className = "msg show " + (failed ? "err" : "ok");
+        if (!failed) { chosen = []; renderList(); }
+      } catch (e) {
+        msg.textContent = "Сервер не отвечает.";
+        msg.className = "msg show err";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Загрузить и разобрать";
+      }
+    });
+
+    function tableCard(t, index) {
+      const extra = t.distinct ? t.distinct.toLocaleString("ru-RU") + " " + (t.distinct_label || "") : "";
+      const period = [t.from, t.to].filter(Boolean).join(" — ");
+      const value = t.present ? t.rows.toLocaleString("ru-RU") + " строк" : "нет данных";
+      const meta = t.present ? [value, period, extra].filter(Boolean).join(" · ") : "ещё не загружали";
+      return `<div class="acc" data-table="${escapeHtml(t.id)}" data-present="${t.present ? "1" : "0"}">
+        <button type="button" class="acc-toggle">
+          <span>
+            <span class="acc-name">${index}. ${escapeHtml(t.label)}</span>
+            <span class="acc-meta">${meta}</span>
+          </span>
+          <span class="acc-chev">›</span>
+        </button>
+        <div class="acc-body"><div class="table-slot">${t.present ? "" : "<p class='empty'>Ещё не загружали.</p>"}</div></div>
+      </div>`;
+    }
+
+    function updateOpenCount() {
+      const items = [...document.querySelectorAll("#stats .acc")];
+      const open = items.filter((el) => el.classList.contains("open")).length;
+      document.getElementById("kpi-open").textContent = items.length
+        ? `открыто ${open} из ${items.length}`
+        : "нет таблиц";
+    }
+
+    async function openAcc(acc) {
+      acc.classList.add("open");
+      acc.querySelector(".acc-toggle").setAttribute("aria-expanded", "true");
+      updateOpenCount();
+      if (acc.dataset.present !== "1" || acc.dataset.loaded) return;
+      const slot = acc.querySelector(".table-slot");
+      slot.innerHTML = "<p class='empty'>Загрузка…</p>";
+      try {
+        await fillTable(acc, 0);
+        acc.dataset.loaded = "1";
+      } catch (err) {
+        slot.innerHTML = "<p class='empty'>Не удалось открыть таблицу.</p>";
+      }
+    }
+
+    function closeAcc(acc) {
+      acc.classList.remove("open");
+      acc.querySelector(".acc-toggle").setAttribute("aria-expanded", "false");
+      updateOpenCount();
+    }
+
+    async function loadBase() {
+      const res = await rtlFetch("api/inventory");
+      const body = await res.json();
+      const tables = body.tables || [];
+      document.getElementById("stats").innerHTML = tables.map((t, i) => tableCard(t, i)).join("")
+        || "<p class='empty'>База пуста.</p>";
+      updateOpenCount();
+    }
+
+    document.getElementById("stats").addEventListener("click", async (e) => {
+      const toggle = e.target.closest(".acc-toggle");
+      if (!toggle) return;
+      const acc = toggle.closest(".acc");
+      if (acc.classList.contains("open")) closeAcc(acc);
+      else await openAcc(acc);
+    });
+    document.getElementById("kpi-expand").addEventListener("click", async () => {
+      for (const acc of document.querySelectorAll("#stats .acc")) await openAcc(acc);
+    });
+    document.getElementById("kpi-collapse").addEventListener("click", () => {
+      document.querySelectorAll("#stats .acc").forEach(closeAcc);
+    });
+
+    async function fillTable(adv, offset) {
+      const id = adv.dataset.table;
+      const slot = adv.querySelector(".table-slot");
+      const res = await rtlFetch(`api/table/${encodeURIComponent(id)}?limit=80&offset=${offset}`);
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "fail");
+      const cols = body.columns || [];
+      const rows = body.rows || [];
+      const head = cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join("");
+      const bodyRows = rows.map((row) =>
+        `<tr>${cols.map((c) => `<td title="${escapeHtml(row[c.id] ?? "")}">${escapeHtml(row[c.id] ?? "")}</td>`).join("")}</tr>`
+      ).join("");
+      const shown = offset + rows.length;
+      const more = shown < (body.total || 0)
+        ? `<button type="button" class="primary more" data-next="${shown}">Ещё строки · ${shown.toLocaleString("ru-RU")} из ${body.total.toLocaleString("ru-RU")}</button>`
+        : `<p class="hint" style="margin:10px 0 0">${(body.total || 0).toLocaleString("ru-RU")} строк</p>`;
+      if (offset === 0) {
+        slot.innerHTML = `<div class="table-wrap"><table class="flat"><thead><tr>${head}</tr></thead><tbody>${bodyRows}</tbody></table></div>${more}`;
+      } else {
+        slot.querySelector("tbody").insertAdjacentHTML("beforeend", bodyRows);
+        const old = slot.querySelector(".more, .hint");
+        if (old) old.outerHTML = more;
+      }
+      const btn = slot.querySelector(".more");
+      if (btn) btn.addEventListener("click", () => fillTable(adv, +btn.dataset.next), { once: true });
+    }
+
+    async function loadLog() {
+      const res = await rtlFetch("api/journal");
+      const body = await res.json();
+      const events = body.events || [];
+      const box = document.getElementById("journal");
+      if (!events.length) { box.innerHTML = "<p class='empty'>Журнал пуст.</p>"; return; }
+      box.innerHTML = events.map((e) => {
+        const raw = String(e.at || "").replace("T", " ");
+        const m = raw.match(/(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+        const date = m ? `${m[3]}.${m[2]}.${m[1]}` : raw.slice(0, 10);
+        const time = m && m[4] ? `${m[4]}:${m[5]}` : "";
+        const detail = e.detail || e.error || "";
+        return `<div class="feed-item">
+          <div class="feed-when">${escapeHtml(date)}${time ? "<br>" + escapeHtml(time) : ""}<span class="feed-area">${escapeHtml(e.area_title || e.area || "")}</span></div>
+          <div>
+            <div class="feed-top">
+              <span class="feed-title">${escapeHtml(e.title || "")}</span>
+              <span class="badge ${e.ok ? "ok" : "bad"}">${e.ok ? "ok" : "ошибка"}</span>
+            </div>
+            ${detail ? `<div class="feed-detail">${escapeHtml(detail)}</div>` : ""}
+          </div>
+        </div>`;
+      }).join("");
+    }
+  </script>
+</body>
+</html>
