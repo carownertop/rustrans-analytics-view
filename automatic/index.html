@@ -7,7 +7,7 @@
   <base href="./" />
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="static/brand.css?v=hub" />
+  <link rel="stylesheet" href="static/brand.css?v=copy" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub3"></script>
 </head>
@@ -19,7 +19,7 @@
           <img class="logo" src="static/logo.png" alt="Рустранс-Логистик" />
           <div>
             <h1>Сбор автоматических отчётов</h1>
-            <p class="caption">Excel из выгрузок 1С · повторная сборка не затирает прошлый файл</p>
+            <p class="caption">Сервис, который помогает собирать автоматизированные отчёты и сводки.</p>
           </div>
         </div>
       </div>
@@ -38,7 +38,7 @@
     <div class="sheet-inner">
       <section class="panel on" id="build">
         <h2 id="build-title">План продаж</h2>
-        <p class="lead" id="build-lead">Кому звонить и что предложить со склада. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.</p>
+        <p class="lead" id="build-lead">Кому звонить и что предложить со склада. Считается от текущего наличия товаров на складе и выбирает клиентов, которые исторически уже покупали этот товар. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.</p>
         <nav class="subnav" id="build-tabs">
           <button type="button" class="sub-pill on" data-build="plan">План продаж</button>
           <button type="button" class="sub-pill" data-build="segmentation">Сегментация</button>
@@ -118,11 +118,11 @@
     const BUILD_COPY = {
       plan: {
         title: "План продаж",
-        lead: "Кому звонить и что предложить со склада. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.",
+        lead: "Кому звонить и что предложить со склада. Считается от текущего наличия товаров на складе и выбирает клиентов, которые исторически уже покупали этот товар. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.",
       },
       segmentation: {
         title: "Сегментация",
-        lead: "Сводка по всей компании и/или файлы по отдельным МОПам. Динамика пишется только вместе со сводкой компании.",
+        lead: "Анализ базы в разрезе RFM, матрицы чек/частоты и жизненного цикла. Сводка по всей компании и/или файлы по отдельным МОПам. Динамика сегментов пишется только вместе со сводкой по всей компании.",
       },
     };
     let allFiles = [];

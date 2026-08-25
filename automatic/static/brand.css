@@ -135,7 +135,7 @@ button, input, select { font: inherit; }
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
-  max-width: 72ch;
+  max-width: 78ch;
 }
 .subnav {
   display: flex;
