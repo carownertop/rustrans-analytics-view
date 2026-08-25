@@ -41,10 +41,14 @@
   }
 
   async function probe(password) {
-    const res = await fetch(url("api/state"), {
-      headers: password ? { Authorization: basic(password) } : {},
-    });
-    return res.ok;
+    try {
+      const res = await fetch(url("api/state"), {
+        headers: password ? { Authorization: basic(password) } : {},
+      });
+      return res.ok;
+    } catch (err) {
+      return false;
+    }
   }
 
   let unlocking = null;
@@ -105,5 +109,10 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   };
 
-  window.rtlReady = unlock();
+  window.rtlReady = (async function () {
+    if (document.readyState === "loading") {
+      await new Promise((resolve) => document.addEventListener("DOMContentLoaded", resolve));
+    }
+    await unlock();
+  })();
 })();
