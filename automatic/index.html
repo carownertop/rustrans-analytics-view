@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Готовые отчёты · Рустранс</title>
+  <base href="./" />
+  <link rel="icon" href="static/logo.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="static/brand.css?v=kpi" />
+</head>
+<body>
+  <header class="head">
+    <div class="head-inner">
+      <div class="head-top">
+        <div class="brand">
+          <img class="logo" src="static/logo.png" alt="Рустранс-Логистик" />
+          <div>
+            <h1>Готовые отчёты</h1>
+            <p class="caption">Витрина с VPS · файлы копируются с сервера, пайплайн в git не кладём</p>
+          </div>
+        </div>
+      </div>
+      <nav class="nav" id="ready-tabs">
+        <button type="button" class="nav-pill on" data-ready="plan">План продаж<span class="n" data-count="plan"></span></button>
+        <button type="button" class="nav-pill" data-ready="segmentation">Сегментация<span class="n" data-count="segmentation"></span></button>
+        <button type="button" class="nav-pill" data-ready="dynamics">Динамика<span class="n" data-count="dynamics"></span></button>
+      </nav>
+      <div class="head-foot">
+        <span class="fresh" id="fresh"></span>
+        <div class="ghosts">
+          <a class="ghost" href="https://141-105-71-134.sslip.io/a/">сборка на сервере</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="sheet">
+    <div class="sheet-inner">
+      <section class="panel on" id="ready">
+        <h2 id="ready-title">План продаж</h2>
+        <p class="lead" id="ready-lead">Скачайте Excel. Это снимок с сервера, не живая папка.</p>
+        <div class="filters">
+          <div>
+            <label class="field-label" for="flt-month">Месяц</label>
+            <select id="flt-month"><option value="">Все</option></select>
+          </div>
+          <div>
+            <label class="field-label" for="flt-date">Дата</label>
+            <select id="flt-date"><option value="">Все</option></select>
+          </div>
+          <div>
+            <label class="field-label" for="flt-manager">Менеджер</label>
+            <select id="flt-manager"><option value="">Все</option></select>
+          </div>
+        </div>
+        <p class="empty" id="files-empty">Пока пусто.</p>
+        <div id="files"></div>
+      </section>
+    </div>
+  </main>
+  <script>
+    const KIND_TITLE = { plan: "План продаж", segmentation: "Сегментация", dynamics: "Динамика" };
+    const FILES = [{"name": "План_продаж_Ковалева_Татьяна_Олеговна.xlsx", "kind": "plan", "kind_title": "План продаж", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Ковалева Татьяна Олеговна", "size": 30050, "mtime": "25.08.2026 15:52", "stamp": 1787662349.0}, {"name": "План_продаж_Стукалов_Олег_Вадимович.xlsx", "kind": "plan", "kind_title": "План продаж", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Стукалов Олег Вадимович", "size": 30588, "mtime": "25.08.2026 15:52", "stamp": 1787662347.0}, {"name": "План_продаж_Брежнева_Алена.xlsx", "kind": "plan", "kind_title": "План продаж", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Брежнева Алена", "size": 53737, "mtime": "25.08.2026 15:52", "stamp": 1787662345.0}, {"name": "План_продаж_Зограбян_Артём_Артурович.xlsx", "kind": "plan", "kind_title": "План продаж", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Зограбян Артём Артурович", "size": 114818, "mtime": "25.08.2026 15:52", "stamp": 1787662340.0}, {"name": "Динамика_и_миграция_вся_компания.xlsx", "kind": "dynamics", "kind_title": "Динамика", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Вся компания", "size": 19698, "mtime": "25.08.2026 15:01", "stamp": 1787659284.0}, {"name": "Сегментация_клиентов_Зограбян_Артём_Артурович.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Зограбян Артём Артурович", "size": 39106, "mtime": "25.08.2026 14:59", "stamp": 1787659188.0}, {"name": "Сегментация_клиентов_Ковалева_Татьяна_Олеговна.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Ковалева Татьяна Олеговна", "size": 13360, "mtime": "25.08.2026 14:59", "stamp": 1787659188.0}, {"name": "Сегментация_клиентов_Брежнева_Алена.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Брежнева Алена", "size": 24480, "mtime": "25.08.2026 14:59", "stamp": 1787659188.0}, {"name": "Сегментация_клиентов_Стукалов_Олег_Вадимович.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Стукалов Олег Вадимович", "size": 13554, "mtime": "25.08.2026 14:59", "stamp": 1787659188.0}, {"name": "Сегментация_клиентов_вся_компания_25-08-26.xlsx", "kind": "segmentation", "kind_title": "Сегментация", "date_key": "2026-08-25", "date_title": "25.08.2026", "month_key": "2026-08", "month_title": "08.2026", "manager": "Вся компания", "size": 63111, "mtime": "25.08.2026 14:59", "stamp": 1787659187.0}];
+    const FRESH = "Срез 1С · Заказы / ЗП: 25.08.2026 · Реализации по менеджерам: 25.08.2026 · Продажи по SKU: 01.08.2026";
+    const PUBLISHED = "25.08.2026 17:53";
+    let readyKind = "plan";
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+    document.getElementById("fresh").textContent = [FRESH, PUBLISHED ? "Опубликовано " + PUBLISHED : ""].filter(Boolean).join(" · ");
+
+    function bindPills(root, cls, attr, onChange) {
+      const buttons = [...root.querySelectorAll("." + cls)];
+      buttons.forEach((btn) => btn.addEventListener("click", () => {
+        buttons.forEach((b) => b.classList.toggle("on", b === btn));
+        onChange(btn.dataset[attr]);
+      }));
+    }
+    bindPills(document.getElementById("ready-tabs"), "nav-pill", "ready", (id) => {
+      readyKind = id;
+      document.getElementById("flt-month").value = "";
+      document.getElementById("flt-date").value = "";
+      document.getElementById("flt-manager").value = "";
+      renderReady();
+    });
+
+    function kindFiles(kind) {
+      return FILES.filter((f) => f.kind === kind);
+    }
+    function fillSelect(select, items, valueKey, labelKey, current, newestFirst) {
+      const seen = new Map();
+      items.forEach((item) => {
+        const value = item[valueKey];
+        if (!value || seen.has(value)) return;
+        seen.set(value, item[labelKey]);
+      });
+      const options = [...seen.entries()].sort((a, b) => newestFirst
+        ? String(b[0]).localeCompare(String(a[0]), "ru")
+        : String(a[1]).localeCompare(String(b[1]), "ru"));
+      const valid = options.some(([value]) => value === current);
+      const chosen = valid ? current : "";
+      select.innerHTML = `<option value="">Все</option>` + options.map(([value, label]) =>
+        `<option value="${escapeHtml(value)}" ${value === chosen ? "selected" : ""}>${escapeHtml(label)}</option>`
+      ).join("");
+    }
+    function updateCounts() {
+      document.querySelectorAll("[data-count]").forEach((el) => {
+        const n = kindFiles(el.dataset.count).length;
+        el.textContent = n ? " · " + n : "";
+      });
+    }
+    function renderReady() {
+      updateCounts();
+      document.getElementById("ready-title").textContent = KIND_TITLE[readyKind];
+      document.getElementById("ready-lead").textContent = "Скачайте Excel. Фильтры только внутри «" + KIND_TITLE[readyKind] + "».";
+      const monthSel = document.getElementById("flt-month");
+      const dateSel = document.getElementById("flt-date");
+      const managerSel = document.getElementById("flt-manager");
+      let rows = kindFiles(readyKind);
+      fillSelect(monthSel, rows, "month_key", "month_title", monthSel.value, true);
+      if (monthSel.value) rows = rows.filter((f) => f.month_key === monthSel.value);
+      fillSelect(dateSel, rows, "date_key", "date_title", dateSel.value, true);
+      if (dateSel.value) rows = rows.filter((f) => f.date_key === dateSel.value);
+      fillSelect(managerSel, rows, "manager", "manager", managerSel.value, false);
+      if (managerSel.value) rows = rows.filter((f) => f.manager === managerSel.value);
+
+      const empty = document.getElementById("files-empty");
+      const box = document.getElementById("files");
+      if (!kindFiles(readyKind).length) {
+        empty.style.display = "block";
+        empty.textContent = "На сервере пока нет файлов «" + KIND_TITLE[readyKind] + "».";
+        box.innerHTML = "";
+        return;
+      }
+      if (!rows.length) {
+        empty.style.display = "block";
+        empty.textContent = "Нет файлов по выбранным фильтрам.";
+        box.innerHTML = "";
+        return;
+      }
+      empty.style.display = "none";
+      const byDate = new Map();
+      rows.forEach((f) => {
+        if (!byDate.has(f.date_key)) byDate.set(f.date_key, { title: f.date_title, files: [] });
+        byDate.get(f.date_key).files.push(f);
+      });
+      box.innerHTML = [...byDate.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([, group]) => `
+        <div class="date-block">
+          <span class="field-label">${escapeHtml(group.title)}</span>
+          ${group.files.map((f) => `
+            <div class="file-row">
+              <a class="file-link" href="files/${encodeURIComponent(f.name)}">${escapeHtml(f.name)}</a>
+              <span class="meta">${escapeHtml(f.manager)} · ${escapeHtml(f.mtime)}</span>
+            </div>
+          `).join("")}
+        </div>
+      `).join("");
+    }
+    ["flt-month", "flt-date", "flt-manager"].forEach((id) => {
+      document.getElementById(id).addEventListener("change", renderReady);
+    });
+    renderReady();
+  </script>
+</body>
+</html>
