@@ -239,7 +239,7 @@
   <div class="toast" id="toast" role="alert"></div>
 
   <script>
-    const BLOBS = [{"salt": "cjvlBaJXemZY6Lw1wSQUWA==", "iv": "u7kYQz1tiZ37gEA/", "data": "rLyWEEhwqsOJ+dIfe6ehGlZpFjrHIrssG9SPRyuUnl3VmyvFAn61wey3Sy1wXz2M4RuZBALUTr3vWncU/HkdockOBJB15ExIQRDx+8dgFwbz", "cookie": "rtl_manage_pw"}, {"salt": "x+PhiqapIzyanNMzv7QmIA==", "iv": "e+UAvWfbzi2dW8Wf", "data": "6l1TFg2nkzk3mBs7fqMTbjYWjtUoKD9xd0pV51lR0epyXA/itLDqjoODoesq6wIOPkDXLTx/+w52o3yMPmQ1qkSusTfiMOOGCjE4K2T3mlSd", "cookie": "rtl_hub_pw"}];
+    const BLOBS = [{"salt": "MECI+uTHote+okXECwYgAA==", "iv": "D5aJym9DcXvAxkW/", "data": "EHS1jm6G/XYWczxUeM1gHSZKUMt+BzCABCUpOzBxOv7i7S3sEYwqmWtSZnZOifn9wnQ2iwOimPCkjWiL/aW4JS1RmUX+LSL+qJl/OY0zm0Cj", "cookie": "rtl_manage_pw"}, {"salt": "Rlo67ZopS9A8DnEF02hJ/Q==", "iv": "z27WAqSuaTovNNTw", "data": "344WPQZvbd4210JMYPiW2GN4otsHcf7hrld7IkbnVf8oeSmebvy3YdNQyu7R4q3or0wdGimpfDsr/Sr/zwrDXSxw7jj9RYqu4wmBy8UamyNF", "cookie": "rtl_hub_pw"}];
     const ITERATIONS = 50000;
     let CFG = null;
     let PASS = "";
@@ -270,11 +270,9 @@
       }
       return "";
     }
-    function clearPwCookies() {
-      PW_COOKIES.forEach(name => {
-        cookiePaths().forEach(path => {
-          document.cookie = name + "=; Max-Age=0; Path=" + path + "; SameSite=Lax";
-        });
+    function clearPwCookie(cookieName) {
+      cookiePaths().forEach(path => {
+        document.cookie = cookieName + "=; Max-Age=0; Path=" + path + "; SameSite=Lax";
       });
     }
 
@@ -316,8 +314,9 @@
           CFG = JSON.parse(new TextDecoder().decode(plain));
           if (!CFG || !CFG.api) throw new Error("bad config");
           PASS = pw;
-          // пишем во все известные cookie-имена — чтобы подтянулось с хаба/аналитики
-          PW_COOKIES.forEach(name => setPwCookie(pw, name));
+          // Важно: писать ТОЛЬКО cookie этого blob.
+          // Иначе пароль manage затрёт rtl_hub_pw и слетит вход на главной витрине.
+          setPwCookie(pw, blob.cookie || "rtl_manage_pw");
           openUi();
           return;
         } catch (e) {
@@ -349,7 +348,8 @@
       try {
         await unlock(document.getElementById("password").value);
       } catch (e) {
-        clearPwCookies();
+        // не трогаем rtl_hub_pw — это cookie главной аналитики
+        clearPwCookie("rtl_manage_pw");
         lockUi();
         show(el, "Неверный пароль", "err");
         showToast("Неверный пароль", "err");
