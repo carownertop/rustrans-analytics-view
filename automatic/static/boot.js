@@ -31,7 +31,7 @@
     el.innerHTML = `
       <form class="rtl-gate-card" id="rtl-gate-form">
         <h2>Пароль</h2>
-        <p>Тот же, что у планов и управления. Данные остаются на сервере.</p>
+        <p>Данные остаются на сервере.</p>
         <input id="rtl-gate-input" type="password" autocomplete="current-password" autofocus />
         <button type="submit" class="primary">Войти</button>
         <p class="rtl-gate-err" id="rtl-gate-err" hidden>Неверный пароль.</p>
