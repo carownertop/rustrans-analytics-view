@@ -134,6 +134,33 @@
     .msg.ok { color:var(--ok); background:var(--ok-bg); border:1px solid rgba(27,127,78,.2); }
     .msg.err { color:var(--red); background:var(--err-bg); border:1px solid rgba(227,6,19,.22); }
     .msg.warn { color:#8a5a00; background:#fff7e6; border:1px solid rgba(180,120,0,.22); }
+    .progress {
+      display:none; margin-top:14px; padding:12px 14px; border-radius:12px;
+      background:#f4f7fb; border:1px solid rgba(19,39,68,.08);
+    }
+    .progress.show { display:block; animation:rise .3s var(--ease) both; }
+    .progress .plabel {
+      font-size:12px; font-weight:700; color:var(--navy); margin:0 0 8px;
+      display:flex; justify-content:space-between; gap:8px;
+    }
+    .progress .plabel span:last-child { color:var(--muted); font-variant-numeric:tabular-nums; }
+    .progress .track {
+      height:10px; border-radius:999px; background:#e4ebf4; overflow:hidden;
+      position:relative;
+    }
+    .progress .bar {
+      height:100%; width:0%; border-radius:999px;
+      background:linear-gradient(90deg, var(--navy), #2a4a78 55%, var(--red));
+      transition:width .45s var(--ease);
+    }
+    .progress.indeterminate .bar {
+      width:35% !important;
+      animation:slide 1.1s ease-in-out infinite;
+    }
+    @keyframes slide {
+      0% { transform:translateX(-30%); }
+      100% { transform:translateX(220%); }
+    }
     .toast {
       position:fixed; right:16px; bottom:16px; z-index:40;
       max-width:min(360px, calc(100vw - 32px));
@@ -196,6 +223,10 @@
         </div>
 
         <button type="button" class="primary" id="send" style="margin-top:14px">Загрузить и разобрать</button>
+        <div class="progress" id="progress" aria-live="polite">
+          <div class="plabel"><span id="progressLabel">Обработка…</span><span id="progressPct">0%</span></div>
+          <div class="track"><div class="bar" id="progressBar"></div></div>
+        </div>
         <div class="msg" id="msg" role="status"></div>
       </div>
       <div class="card hint">
@@ -207,7 +238,7 @@
   <div class="toast" id="toast" role="alert"></div>
 
   <script>
-    const BLOBS = [{"salt": "qcPOhPEEyh+S6xw9MXerIQ==", "iv": "W9aLJHA3vFqb+reA", "data": "fw7rZejEdxubIqDvcjTx9xbMNUDPDHyVB3IogrvpUy/M+991U+C79896w1Rq9RV3utLd0rpR52figGkRXa3aHYu7u7LWXjhGrI1tR8ScZD7F", "cookie": "rtl_manage_pw"}, {"salt": "KwbI+iluZOGug60wlZy8CQ==", "iv": "p9pjv9/kaKM5OOb4", "data": "G5eEHYUAHoNPMH5MNf5LxeON0999ZJZrOBDJLTuZYBlo0mQ7ca0XLjEf1GrR95u6mgbM7q9L+/9XQabPADKipM8OsQpzrEs6vC3wE4rnxjm8", "cookie": "rtl_hub_pw"}];
+    const BLOBS = [{"salt": "RY3RdsbJMgaF30+zVBkFtw==", "iv": "HcV/vPdnWydKH5bx", "data": "MEBCT26R9K3rXtZIZTbLeXdzGOh5z00pfaxG3zR5pV2NzInMPUENuBTeicehHSGMqAhx4ALhG6U7Ih2og6SPI5fQ7xg6Ydj06KpGkNf7byQa", "cookie": "rtl_manage_pw"}, {"salt": "VrrvSEUNxBV1/FqJh5gAWA==", "iv": "ZQ3Jfq6aCF2JE+uR", "data": "qZ9vs0Wb+wTC44ugZbffrbwpQwHSancM2qgAB+f+Gub9vp3eAQPBtyKlPnYo+SfFWbWWCOhZ6VIQlnv4THkZMOPu9sXmjwnqsMjXETQQYL+E", "cookie": "rtl_hub_pw"}];
     const ITERATIONS = 50000;
     let CFG = null;
     let PASS = "";
@@ -371,12 +402,39 @@
 
     document.getElementById("send").onclick = async () => {
       const msg = document.getElementById("msg");
+      const progress = document.getElementById("progress");
+      const progressBar = document.getElementById("progressBar");
+      const progressLabel = document.getElementById("progressLabel");
+      const progressPct = document.getElementById("progressPct");
       msg.className = "msg";
       if (!CFG) { show(msg, "Сначала введите пароль", "err"); showToast("Нужен вход", "err"); return; }
       if (!chosen.length) { show(msg, "Выберите хотя бы один файл .xlsx", "err"); showToast("Нет файлов", "err"); return; }
       const btn = document.getElementById("send");
       btn.disabled = true;
       btn.textContent = chosen.length > 1 ? ("Отправка " + chosen.length + "…") : "Отправка…";
+
+      let pollTimer = null;
+      const stopPoll = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
+      const setProgress = (pct, label, indeterminate) => {
+        progress.classList.add("show");
+        progress.classList.toggle("indeterminate", !!indeterminate);
+        const p = Math.max(0, Math.min(100, pct | 0));
+        progressBar.style.width = p + "%";
+        progressPct.textContent = indeterminate ? "…" : (p + "%");
+        if (label) progressLabel.textContent = label;
+      };
+      const statusUrl = CFG.api.replace(/\/$/, "") + "/api/upload/status";
+      setProgress(4, "Отправка файлов на сервер…", true);
+      pollTimer = setInterval(async () => {
+        try {
+          const sr = await fetch(statusUrl, { cache: "no-store" });
+          if (!sr.ok) return;
+          const st = await sr.json();
+          if (!st || st.phase === "idle") return;
+          setProgress(st.pct || 0, st.label || "Обработка…", false);
+        } catch (e) { /* ignore poll errors */ }
+      }, 700);
+
       try {
         for (const f of chosen) {
           if (f.size > 25 * 1024 * 1024) throw new Error("«" + f.name + "» больше 25 МБ");
@@ -388,9 +446,10 @@
         const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/upload", { method: "POST", body: fd });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
+        setProgress(100, "Готово", false);
         const summary = j.summary || (("Готово: " + (j.path || "")) + (j.hint ? ("\n" + j.hint) : ""));
         const type = j.partial ? "warn" : "ok";
-        show(msg, summary + (j.hint && j.summary ? ("\n\n" + j.hint) : ""), type);
+        show(msg, summary, type);
         showToast(j.partial ? "Часть файлов с ошибкой" : "Загрузка успешна", j.partial ? "err" : "ok");
         chosen = [];
         renderList();
@@ -400,9 +459,12 @@
           ? "Сервер не отвечает. Проверьте VPS API / сеть."
           : m, "err");
         showToast("Ошибка загрузки", "err");
+        progress.classList.remove("show");
       } finally {
+        stopPoll();
         btn.disabled = false;
         btn.textContent = "Загрузить и разобрать";
+        setTimeout(() => { progress.classList.remove("show"); }, 1600);
       }
     };
   </script>
