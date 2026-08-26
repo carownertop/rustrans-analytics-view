@@ -44,20 +44,20 @@ button, input, select { font: inherit; }
 }
 .brand {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
   min-width: 0;
 }
 .brand-mark {
   flex: 0 0 auto;
-  height: 52px;
-  width: 228px;
+  height: 72px;
+  width: min(316px, 72vw);
   display: flex;
   align-items: center;
   justify-content: center;
   background: #fff;
   border-radius: 12px;
-  padding: 3px 5px;
+  padding: 4px 8px;
   box-shadow: 0 6px 16px rgba(0,0,0,.18);
   overflow: hidden;
 }
