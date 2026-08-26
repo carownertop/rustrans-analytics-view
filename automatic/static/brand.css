@@ -957,6 +957,9 @@ body.cov-resizing {
   font-weight: 600;
   color: #16304f;
 }
+.cov-call-st.ok { color: var(--ok); }
+.cov-call-st.bad { color: var(--red); }
+.cov-call-st.mail { color: #9a6b00; }
 .cov-event-title {
   margin-top: 4px;
   font-size: 13px;
