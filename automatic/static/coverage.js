@@ -21,6 +21,8 @@
     { key: "last_kind", title: "Тип" },
     { key: "last_subject", title: "Тема / суть" },
     { key: "events_count", title: "Дел" },
+    { key: "has_planned", title: "План" },
+    { key: "has_overdue", title: "Просроч." },
     { key: "has_deal", title: "Сделка" },
     { key: "deal_links", title: "Открытые сделки" },
     { key: "has_sp", title: "СП" },
@@ -69,9 +71,10 @@
     }
     root.innerHTML = list.map(function (item) {
       const on = all || set[String(item.id)];
+      const meta = item.cards != null ? " <span class=\"meta\">· " + item.cards + "</span>" : "";
       return "<label><input type=\"checkbox\" name=\"" + name + "\" value=\"" +
         escapeHtml(item.id) + "\"" + (on ? " checked" : "") + " /> " +
-        escapeHtml(item.title) + "</label>";
+        escapeHtml(item.title) + meta + "</label>";
     }).join("");
   }
   function selected(name) {
@@ -148,7 +151,9 @@
     const enums = (STATE.meta && STATE.meta.enums) || {};
     if (!id) {
       checkAll("cov-company-mop", true);
+      checkAll("cov-other-mop", true);
       checkAll("cov-activity-mop", true);
+      checkAll("cov-planned", true);
       checkAll("cov-rfm", true);
       checkAll("cov-work", true);
       checkAll("cov-type", true);
@@ -159,7 +164,9 @@
     if (id === "rfm_work") {
       setUniverse("company");
       checkAll("cov-company-mop", true);
+      checkAll("cov-other-mop", true);
       checkAll("cov-activity-mop", true);
+      checkAll("cov-planned", true);
       checkAll("cov-work", true);
       checkAll("cov-type", true);
       checkAll("cov-dir", true);
@@ -168,7 +175,9 @@
     } else if (id === "no_purchases") {
       setUniverse("company");
       checkAll("cov-company-mop", true);
+      checkAll("cov-other-mop", true);
       checkAll("cov-activity-mop", true);
+      checkAll("cov-planned", true);
       checkAll("cov-work", true);
       checkAll("cov-type", true);
       checkAll("cov-dir", true);
@@ -176,12 +185,16 @@
     } else if (id === "leads_open") {
       setUniverse("lead");
       checkAll("cov-company-mop", true);
+      checkAll("cov-other-mop", true);
       checkAll("cov-activity-mop", true);
+      checkAll("cov-planned", true);
       setChecks("cov-lead-sem", ["P"]);
     } else if (id === "contacts_solo") {
       setUniverse("contact");
       checkAll("cov-company-mop", true);
+      checkAll("cov-other-mop", true);
       checkAll("cov-activity-mop", true);
+      checkAll("cov-planned", true);
     }
   }
   function payload() {
@@ -198,7 +211,9 @@
       direction: selected("cov-dir"),
       lead_semantic: selected("cov-lead-sem"),
       mop_ids: selected("cov-company-mop"),
+      other_assignee_ids: selected("cov-other-mop"),
       activity_mop_ids: selected("cov-activity-mop"),
+      planned: selected("cov-planned"),
     };
   }
   function badge(row) {
@@ -217,7 +232,7 @@
     if (key === "coverage" || key === "coverage_title") {
       return ({ none: 0, email: 1, touched: 2 })[row.coverage] || 9;
     }
-    if (key === "has_deal" || key === "has_sp") return row[key] ? 1 : 0;
+    if (key === "has_deal" || key === "has_sp" || key === "has_planned" || key === "has_overdue") return row[key] ? 1 : 0;
     if (key === "deal_links" || key === "sp_links") return (row[key] || []).length;
     if (key === "events_count") return row.events_count || (row.events || []).length || 0;
     if (key === "last_kind") return ((row.last_kind || "") + " " + (row.last_at || "")).toLowerCase();
@@ -382,6 +397,8 @@
           (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</td>" +
           "<td class=\"cov-subject\" title=\"" + escapeHtml(subject) + "\">" + escapeHtml(short) + "</td>" +
           "<td><button type=\"button\" class=\"cov-events-btn\" data-i=\"" + i + "\">" + n + " →</button></td>" +
+          "<td>" + (row.has_planned ? "да" : "") + "</td>" +
+          "<td>" + (row.has_overdue ? "да" : "") + "</td>" +
           "<td>" + (row.has_deal ? "да" : "") + "</td>" +
           "<td class=\"cov-links\">" + linkList(row.deal_links) + "</td>" +
           "<td>" + (row.has_sp ? "да" : "") + "</td>" +
@@ -554,7 +571,9 @@
     checks($("cov-dir"), "cov-dir", enums.direction);
     checks($("cov-lead-sem"), "cov-lead-sem", body.lead_semantic);
     checks($("cov-mops-company"), "cov-company-mop", body.mops);
+    checks($("cov-mops-other"), "cov-other-mop", body.other_assignees || []);
     checks($("cov-mops-activity"), "cov-activity-mop", body.mops);
+    checks($("cov-planned"), "cov-planned", body.planned_filters || []);
     fillPresets();
     applyPreset("");
   }
@@ -578,7 +597,7 @@
       fillMeta(body);
     } catch (err) {
       showMsg("Фильтры не загрузились: " + ((err && err.message) || err), false);
-      ["cov-mops-company", "cov-mops-activity", "cov-rfm", "cov-work", "cov-type", "cov-dir", "cov-lead-sem"].forEach(function (id) {
+      ["cov-mops-company", "cov-mops-other", "cov-mops-activity", "cov-planned", "cov-rfm", "cov-work", "cov-type", "cov-dir", "cov-lead-sem"].forEach(function (id) {
         const el = $(id);
         if (el && !el.innerHTML) el.innerHTML = "<p class='empty'>Не загрузилось</p>";
       });
