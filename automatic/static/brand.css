@@ -371,6 +371,13 @@ button.primary:disabled { opacity: .55; cursor: wait; }
   opacity: 1;
 }
 .adv-body > div { overflow: hidden; }
+#adv-cov.open .adv-body {
+  display: block;
+  opacity: 1;
+}
+#adv-cov .adv-body > div {
+  overflow: visible;
+}
 .adv-note {
   margin: 8px 0 10px;
   font-size: 11px;
