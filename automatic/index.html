@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Сбор автоматических отчётов · Рустранс</title>
   <base href="./" />
-  <link rel="icon" href="/rustrans-analytics-view/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/rustrans-analytics-view/favicon-32.png" type="image/png" sizes="32x32" />
-  <link rel="apple-touch-icon" href="/rustrans-analytics-view/apple-touch-icon.png" />
+  <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="static/brand.css?v=cov" />
+  <link rel="stylesheet" href="static/brand.css?v=cov3" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub4"></script>
-  <script src="static/coverage.js?v=2"></script>
+  <script src="static/coverage.js?v=3"></script>
 </head>
 <body>
   <header class="head">
@@ -109,45 +107,60 @@
               <input id="cov-period-to" type="date" />
             </div>
           </div>
-          <div class="adv" id="adv-cov">
-            <button type="button" class="adv-toggle" data-adv="adv-cov" aria-expanded="false">
+          <div class="adv open" id="adv-cov">
+            <button type="button" class="adv-toggle" data-adv="adv-cov" aria-expanded="true">
               <span class="chev">›</span> Поля среза
             </button>
             <div class="adv-body">
-              <div class="filters">
-                <div>
-                  <label class="field-label" for="cov-created-from">Созданы с</label>
-                  <input id="cov-created-from" type="date" />
+              <div>
+                <p class="adv-note">По умолчанию все значения включены — можно снять лишнее. Внутри поля отметьте несколько сразу. «Созданы» пустые = любые даты.</p>
+                <div class="filters">
+                  <div>
+                    <label class="field-label" for="cov-created-from">Созданы с</label>
+                    <input id="cov-created-from" type="date" />
+                  </div>
+                  <div>
+                    <label class="field-label" for="cov-created-to">по</label>
+                    <input id="cov-created-to" type="date" />
+                  </div>
                 </div>
-                <div>
-                  <label class="field-label" for="cov-created-to">по</label>
-                  <input id="cov-created-to" type="date" />
+                <span class="field-label">Ответственный</span>
+                <div class="mops" id="cov-mops"></div>
+                <div id="cov-company-fields">
+                  <span class="field-label">RFM</span>
+                  <div class="mops" id="cov-rfm"></div>
+                  <span class="field-label">Статус работы</span>
+                  <div class="mops" id="cov-work"></div>
+                  <span class="field-label">Вид клиента</span>
+                  <div class="mops" id="cov-type"></div>
+                  <span class="field-label">Направление</span>
+                  <div class="mops" id="cov-dir"></div>
                 </div>
-              </div>
-              <div id="cov-company-fields">
-                <span class="field-label">RFM</span>
-                <div class="mops" id="cov-rfm"></div>
-                <span class="field-label">Статус работы</span>
-                <div class="mops" id="cov-work"></div>
-                <span class="field-label">Вид клиента</span>
-                <div class="mops" id="cov-type"></div>
-                <span class="field-label">Направление</span>
-                <div class="mops" id="cov-dir"></div>
-              </div>
-              <div id="cov-lead-fields" hidden>
-                <span class="field-label">Статус лида</span>
-                <div class="mops" id="cov-lead-sem"></div>
+                <div id="cov-lead-fields" hidden>
+                  <span class="field-label">Статус лида</span>
+                  <div class="mops" id="cov-lead-sem"></div>
+                </div>
               </div>
             </div>
           </div>
-          <span class="field-label">МОПы</span>
-          <p class="hint" style="margin:0 0 10px">Пусто — все ответственные из среза.</p>
-          <div class="mops" id="cov-mops"></div>
           <button type="button" class="primary" id="cov-btn">Собрать проработку</button>
-          <button type="button" class="ghost-btn" id="cov-xlsx" hidden>Скачать Excel</button>
           <div class="msg" id="cov-msg"></div>
-          <div id="cov-summary" class="cov-summary" hidden></div>
-          <div id="cov-table"></div>
+          <div id="cov-result" class="cov-result" hidden>
+            <div id="cov-summary" class="cov-summary"></div>
+            <div class="cov-toolbar">
+              <input id="cov-search" type="search" placeholder="Поиск по таблице…" />
+              <div class="cov-chips" id="cov-chips">
+                <button type="button" class="cov-chip on" data-cov="all">Все</button>
+                <button type="button" class="cov-chip" data-cov="touched">Потроганы</button>
+                <button type="button" class="cov-chip" data-cov="email">Письмо</button>
+                <button type="button" class="cov-chip" data-cov="none">Тишина</button>
+              </div>
+              <button type="button" class="ghost-btn" id="cov-xlsx">Скачать Excel</button>
+            </div>
+            <p class="hint" id="cov-view-meta" style="margin:0 0 8px"></p>
+            <div id="cov-table"></div>
+            <div id="cov-detail" class="cov-detail-panel" hidden></div>
+          </div>
         </div>
       </section>
 
