@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Сбор автоматических отчётов · Рустранс</title>
   <base href="./" />
-    <link rel="icon" href="/rustrans-analytics-view/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/rustrans-analytics-view/favicon-32.png" type="image/png" sizes="32x32" />
-  <link rel="apple-touch-icon" href="/rustrans-analytics-view/apple-touch-icon.png" />
+  <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="static/brand.css?v=copy" />
+  <link rel="stylesheet" href="static/brand.css?v=cov" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub4"></script>
+  <script src="static/coverage.js?v=1"></script>
 </head>
 <body>
   <header class="head">
@@ -43,7 +42,7 @@
         <p class="lead" id="build-lead">Кому звонить и что предложить со склада. Считается от текущего наличия товаров на складе и выбирает клиентов, которые исторически уже покупали этот товар. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.</p>
         <nav class="subnav" id="build-tabs">
           <button type="button" class="sub-pill on" data-build="plan">План продаж</button>
-          <button type="button" class="sub-pill" data-build="segmentation">Сегментация</button>
+          <button type="button" class="sub-pill" data-build="coverage">Проработка</button>
         </nav>
 
         <div class="subpanel on" id="build-plan">
@@ -86,6 +85,67 @@
           <button type="button" class="primary" id="seg-btn">Собрать сегментацию</button>
           <div class="msg" id="seg-msg"></div>
         </div>
+
+        <div class="subpanel" id="build-coverage">
+          <p class="hint" style="margin:0 0 12px">Один отчёт: срез карточек и касания за период. Автодела не входят. Письмо — отдельная метка. Сделка и СП — рядом, не вместо звонка.</p>
+          <span class="field-label">Вселенная</span>
+          <nav class="subnav" id="cov-universe">
+            <button type="button" class="sub-pill on" data-universe="company">Компании</button>
+            <button type="button" class="sub-pill" data-universe="lead">Лиды</button>
+            <button type="button" class="sub-pill" data-universe="contact">Контакты</button>
+          </nav>
+          <label class="field-label" for="cov-preset">Пресет</label>
+          <select id="cov-preset"></select>
+          <div class="filters" style="margin-top:12px">
+            <div>
+              <label class="field-label" for="cov-period-from">Период анализа с</label>
+              <input id="cov-period-from" type="date" />
+            </div>
+            <div>
+              <label class="field-label" for="cov-period-to">по</label>
+              <input id="cov-period-to" type="date" />
+            </div>
+          </div>
+          <div class="adv" id="adv-cov">
+            <button type="button" class="adv-toggle" data-adv="adv-cov" aria-expanded="false">
+              <span class="chev">›</span> Поля среза
+            </button>
+            <div class="adv-body">
+              <div class="filters">
+                <div>
+                  <label class="field-label" for="cov-created-from">Созданы с</label>
+                  <input id="cov-created-from" type="date" />
+                </div>
+                <div>
+                  <label class="field-label" for="cov-created-to">по</label>
+                  <input id="cov-created-to" type="date" />
+                </div>
+              </div>
+              <div id="cov-company-fields">
+                <span class="field-label">RFM</span>
+                <div class="mops" id="cov-rfm"></div>
+                <span class="field-label">Статус работы</span>
+                <div class="mops" id="cov-work"></div>
+                <span class="field-label">Вид клиента</span>
+                <div class="mops" id="cov-type"></div>
+                <span class="field-label">Направление</span>
+                <div class="mops" id="cov-dir"></div>
+              </div>
+              <div id="cov-lead-fields" hidden>
+                <span class="field-label">Статус лида</span>
+                <div class="mops" id="cov-lead-sem"></div>
+              </div>
+            </div>
+          </div>
+          <span class="field-label">МОПы</span>
+          <p class="hint" style="margin:0 0 10px">Пусто — все ответственные из среза.</p>
+          <div class="mops" id="cov-mops"></div>
+          <button type="button" class="primary" id="cov-btn">Собрать проработку</button>
+          <button type="button" class="ghost-btn" id="cov-xlsx" hidden>Скачать Excel</button>
+          <div class="msg" id="cov-msg"></div>
+          <div id="cov-summary" class="cov-summary" hidden></div>
+          <div id="cov-table"></div>
+        </div>
       </section>
 
       <section class="panel" id="ready">
@@ -94,7 +154,7 @@
         <nav class="subnav" id="ready-tabs">
           <button type="button" class="sub-pill on" data-ready="plan">План продаж<span class="n" data-count="plan"></span></button>
           <button type="button" class="sub-pill" data-ready="segmentation">Сегментация<span class="n" data-count="segmentation"></span></button>
-          <button type="button" class="sub-pill" data-ready="dynamics">Динамика<span class="n" data-count="dynamics"></span></button>
+          <button type="button" class="sub-pill" data-ready="coverage">Проработка<span class="n" data-count="coverage"></span></button>
         </nav>
         <div class="filters">
           <div>
@@ -116,7 +176,7 @@
     </div>
   </main>
   <script>
-    const KIND_TITLE = { plan: "План продаж", segmentation: "Сегментация", dynamics: "Динамика" };
+    const KIND_TITLE = { plan: "План продаж", segmentation: "Сегментация", dynamics: "Динамика", coverage: "Проработка" };
     const BUILD_COPY = {
       plan: {
         title: "План продаж",
@@ -125,6 +185,10 @@
       segmentation: {
         title: "Сегментация",
         lead: "Анализ базы в разрезе RFM, матрицы чек/частоты и жизненного цикла. Сводка по всей компании и/или файлы по отдельным МОПам. Динамика сегментов пишется только вместе со сводкой по всей компании.",
+      },
+      coverage: {
+        title: "Проработка",
+        lead: "Срез карточек и касания за выбранный период. Письмо отдельно. Сделка и СП — рядом.",
       },
     };
     let allFiles = [];
@@ -263,6 +327,7 @@
       document.getElementById("seg-mops").innerHTML = mopHtml(managers, "seg-mop");
       renderReady();
     }
+    window.loadState = loadState;
 
     function goReady(kind) {
       readyKind = kind === "segmentation" ? "segmentation" : kind;

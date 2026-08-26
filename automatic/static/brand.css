@@ -643,7 +643,55 @@ table.flat tbody tr:nth-child(even) td:first-child { background: #fff; }
   border-radius: 10px;
   padding: 12px 14px;
 }
-.rtl-gate-err { color: var(--red) !important; margin: 10px 0 0 !important; }
+.cov-summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+.cov-kpi {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.cov-kpi span {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cov-kpi b {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 800;
+}
+.cov-wrap { max-height: 520px; }
+.cov-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.cov-badge.ok { background: var(--ok-bg); color: var(--ok); }
+.cov-badge.mail { background: #eef2f8; color: var(--navy); }
+.cov-badge.bad { background: var(--err-bg); color: var(--red); }
+.cov-quote {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: pre-wrap;
+  padding: 8px 0 12px;
+}
+tr.cov-detail td { background: #f7f9fc; }
+@media (max-width: 720px) {
+  .cov-summary { grid-template-columns: 1fr 1fr; }
+}
 @media (max-width: 720px) {
   .head-top { flex-direction: column; }
   .filters { grid-template-columns: 1fr; }
