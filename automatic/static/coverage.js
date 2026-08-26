@@ -38,6 +38,11 @@
     last_subject: 220, events_count: 64, has_planned: 64, has_overdue: 72,
     has_deal: 72, deal_links: 160, has_sp: 56, sp_links: 160,
   };
+  const MULTI_FILTER_COLS = { event_types: true, contact_responsibles: true };
+  const EVENT_TYPE_ORDER = [
+    "Открытая сделка", "Открытое СП", "Звонок", "Встреча", "Zoom",
+    "Открытая линия", "Живой контакт", "Письмо", "Комментарий", "Дело", "Задача",
+  ];
 
   function $(id) {
     return document.getElementById(id);
@@ -534,9 +539,45 @@
     const text = String(raw == null || raw === "" ? "—" : raw);
     return text;
   }
+  function colFilterActive(key) {
+    return Object.prototype.hasOwnProperty.call(STATE.colFilters, key);
+  }
+  function splitFilterTokens(text) {
+    return String(text || "")
+      .split(",")
+      .map(function (s) { return s.trim(); })
+      .filter(function (s) { return s && s !== "—"; });
+  }
+  function cellFilterTokens(row, key) {
+    return splitFilterTokens(cellFilterText(row, key));
+  }
+  function rowMatchesColFilter(row, key, allowed) {
+    if (!allowed.length) return false;
+    if (MULTI_FILTER_COLS[key]) {
+      const tokens = cellFilterTokens(row, key);
+      if (!tokens.length) return false;
+      return allowed.some(function (v) { return tokens.indexOf(v) >= 0; });
+    }
+    return allowed.indexOf(cellFilterText(row, key)) >= 0;
+  }
+  function sortMultiFilterValues(key, list) {
+    if (key === "event_types") {
+      return list.slice().sort(function (a, b) {
+        const ia = EVENT_TYPE_ORDER.indexOf(a);
+        const ib = EVENT_TYPE_ORDER.indexOf(b);
+        const ka = ia >= 0 ? ia : EVENT_TYPE_ORDER.length;
+        const kb = ib >= 0 ? ib : EVENT_TYPE_ORDER.length;
+        if (ka !== kb) return ka - kb;
+        return String(a).localeCompare(String(b), "ru", { numeric: true });
+      });
+    }
+    return list.slice().sort(function (a, b) {
+      return String(a).localeCompare(String(b), "ru", { numeric: true });
+    });
+  }
   function hasColFilters() {
     return Object.keys(STATE.colFilters).some(function (k) {
-      return STATE.colFilters[k] && STATE.colFilters[k].length;
+      return colFilterActive(k);
     });
   }
   function baseFilteredRows() {
@@ -562,15 +603,27 @@
       for (let i = 0; i < COLS.length; i++) {
         const key = COLS[i].key;
         if (skipKey && key === skipKey) continue;
+        if (!colFilterActive(key)) continue;
         const allowed = STATE.colFilters[key];
-        if (!allowed || !allowed.length) continue;
-        if (allowed.indexOf(cellFilterText(r, key)) < 0) return false;
+        if (!rowMatchesColFilter(r, key, allowed)) return false;
       }
       return true;
     });
   }
   function uniqueColValues(key) {
     const rows = applyColFilters(baseFilteredRows(), key);
+    if (MULTI_FILTER_COLS[key]) {
+      const seen = {};
+      const out = [];
+      rows.forEach(function (r) {
+        cellFilterTokens(r, key).forEach(function (v) {
+          if (seen[v]) return;
+          seen[v] = true;
+          out.push(v);
+        });
+      });
+      return sortMultiFilterValues(key, out);
+    }
     const seen = {};
     const out = [];
     rows.forEach(function (r) {
@@ -612,8 +665,9 @@
     }
     STATE.openFilter = key;
     const values = uniqueColValues(key);
-    const selected = STATE.colFilters[key];
-    const allOn = !selected || !selected.length;
+    const hasFilter = colFilterActive(key);
+    const selected = hasFilter ? (STATE.colFilters[key] || []) : null;
+    const allOn = !hasFilter;
     const set = {};
     (selected || []).forEach(function (v) { set[v] = true; });
     pop.hidden = false;
@@ -623,7 +677,8 @@
       ) + "</div>" +
       "<input type=\"search\" class=\"cov-col-filter-q\" placeholder=\"Найти значение…\" />" +
       "<div class=\"cov-col-filter-actions\">" +
-      "<button type=\"button\" data-act=\"all\">Все</button>" +
+      "<button type=\"button\" data-act=\"all\">Выделить все</button>" +
+      "<button type=\"button\" data-act=\"clear\">Снять все</button>" +
       "<button type=\"button\" data-act=\"none\">Сбросить</button>" +
       "<button type=\"button\" data-act=\"apply\" class=\"primary\">Ок</button></div>" +
       "<div class=\"cov-col-filter-list\">" +
@@ -662,6 +717,12 @@
         });
         return;
       }
+      if (act === "clear") {
+        pop.querySelectorAll(".cov-col-filter-list input").forEach(function (el) {
+          el.checked = false;
+        });
+        return;
+      }
       if (act === "none") {
         delete STATE.colFilters[key];
         closeColFilter();
@@ -671,7 +732,8 @@
       if (act === "apply") {
         const picked = Array.prototype.slice.call(pop.querySelectorAll(".cov-col-filter-list input:checked"))
           .map(function (el) { return el.value; });
-        if (!picked.length || picked.length === values.length) delete STATE.colFilters[key];
+        if (!picked.length) STATE.colFilters[key] = [];
+        else if (picked.length === values.length) delete STATE.colFilters[key];
         else STATE.colFilters[key] = picked;
         closeColFilter();
         paintTable();
@@ -882,7 +944,7 @@
     table.innerHTML =
       "<div class=\"table-wrap cov-wrap\"><table class=\"flat cov-grid\"><thead><tr>" +
       COLS.map(function (c) {
-        const active = STATE.colFilters[c.key] && STATE.colFilters[c.key].length;
+        const active = colFilterActive(c.key);
         return "<th data-sort=\"" + c.key + "\" style=\"" + colStyle(c.key) + "\">" +
           "<span class=\"cov-th-main\">" +
           "<span class=\"cov-th-title\">" + escapeHtml(c.title) + arrow(c.key) + "</span>" +
