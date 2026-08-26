@@ -275,12 +275,84 @@
   function fillPresets() {
     const select = $("cov-preset");
     if (!select || !STATE.meta) return;
-    const items = (STATE.meta.presets || []).filter(function (p) {
+    const current = select.value;
+    const builtin = (STATE.meta.presets || []).filter(function (p) {
       return p.universe === STATE.universe;
     });
-    select.innerHTML = "<option value=\"\">Без пресета</option>" + items.map(function (p) {
-      return "<option value=\"" + escapeHtml(p.id) + "\">" + escapeHtml(p.title) + "</option>";
-    }).join("");
+    const user = (STATE.meta.user_presets || []).filter(function (p) {
+      return p.universe === STATE.universe;
+    });
+    let html = "<option value=\"\">Без пресета</option>";
+    if (builtin.length) {
+      html += "<optgroup label=\"Встроенные\">" + builtin.map(function (p) {
+        return "<option value=\"" + escapeHtml(p.id) + "\">" + escapeHtml(p.title) + "</option>";
+      }).join("") + "</optgroup>";
+    }
+    if (user.length) {
+      html += "<optgroup label=\"Мои срезы\">" + user.map(function (p) {
+        return "<option value=\"" + escapeHtml(p.id) + "\">" + escapeHtml(p.title) + "</option>";
+      }).join("") + "</optgroup>";
+    }
+    select.innerHTML = html;
+    const valid = Array.prototype.some.call(select.options, function (o) { return o.value === current; });
+    select.value = valid ? current : "";
+    syncPresetActions();
+  }
+  function findUserPreset(id) {
+    return (STATE.meta && STATE.meta.user_presets || []).filter(function (p) {
+      return p.id === id;
+    })[0] || null;
+  }
+  function syncPresetActions() {
+    const select = $("cov-preset");
+    const del = $("cov-preset-delete");
+    if (!del || !select) return;
+    const id = select.value || "";
+    del.hidden = !id.startsWith("user:");
+  }
+  function restorePicker(name, ids) {
+    const inputs = document.querySelectorAll("input[name=\"" + name + "\"]");
+    const total = inputs.length;
+    if (!total) return;
+    const list = ids || [];
+    if (!list.length) {
+      checkAll(name, false);
+      return;
+    }
+    if (list.length >= total) {
+      checkAll(name, true);
+      return;
+    }
+    setChecks(name, list);
+  }
+  function applyUserPreset(preset) {
+    if (!preset) return;
+    setUniverse(preset.universe || "company", false);
+    if ($("cov-period-from")) $("cov-period-from").value = preset.period_from || "";
+    if ($("cov-period-to")) $("cov-period-to").value = preset.period_to || "";
+    if ($("cov-created-from")) $("cov-created-from").value = preset.created_from || "";
+    if ($("cov-created-to")) $("cov-created-to").value = preset.created_to || "";
+    restorePicker("cov-company-mop", preset.mop_ids);
+    restorePicker("cov-other-mop", preset.other_assignee_ids);
+    restorePicker("cov-activity-mop", preset.activity_mop_ids);
+    restorePicker("cov-planned", preset.planned);
+    restorePicker("cov-rfm", preset.rfm);
+    restorePicker("cov-work", preset.work_status);
+    restorePicker("cov-type", preset.client_type);
+    restorePicker("cov-dir", preset.direction);
+    restorePicker("cov-lead-sem", preset.lead_semantic);
+    setUniverse(STATE.universe);
+  }
+  function applySelectedPreset(id) {
+    if (!id) {
+      applyPreset("");
+      return;
+    }
+    if (id.indexOf("user:") === 0) {
+      applyUserPreset(findUserPreset(id));
+      return;
+    }
+    applyPreset(id);
   }
   function cardMopCopy(universe) {
     if (universe === "lead") {
@@ -884,13 +956,76 @@
         setUniverse(btn.getAttribute("data-universe"));
         const preset = $("cov-preset");
         if (preset) preset.value = "";
-        applyPreset("");
+        applySelectedPreset("");
       });
     });
     const preset = $("cov-preset");
     if (preset) {
       preset.addEventListener("change", function () {
-        applyPreset(preset.value);
+        applySelectedPreset(preset.value);
+        syncPresetActions();
+      });
+    }
+    const presetSave = $("cov-preset-save");
+    if (presetSave) {
+      presetSave.addEventListener("click", async function () {
+        const title = window.prompt("Название среза", "");
+        if (title == null) return;
+        if (!String(title).trim()) {
+          showMsg("Название не может быть пустым.", false);
+          return;
+        }
+        presetSave.disabled = true;
+        try {
+          const res = await window.rtlFetch("api/coverage/presets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(Object.assign({ title: String(title).trim() }, payload())),
+          });
+          const body = await res.json();
+          if (!body.ok) {
+            showMsg(body.error || "Не удалось сохранить срез", false);
+            return;
+          }
+          STATE.meta.user_presets = body.user_presets || STATE.meta.user_presets || [];
+          fillPresets();
+          if (preset && body.preset && body.preset.id) preset.value = body.preset.id;
+          syncPresetActions();
+          showMsg("Срез «" + String(title).trim() + "» сохранён.", true);
+        } catch (err) {
+          showMsg((err && err.message) || "Сервер не отвечает.", false);
+        } finally {
+          presetSave.disabled = false;
+        }
+      });
+    }
+    const presetDelete = $("cov-preset-delete");
+    if (presetDelete) {
+      presetDelete.addEventListener("click", async function () {
+        const id = preset && preset.value;
+        if (!id || id.indexOf("user:") !== 0) return;
+        const item = findUserPreset(id);
+        if (!window.confirm("Удалить срез «" + (item && item.title ? item.title : id) + "»?")) return;
+        presetDelete.disabled = true;
+        try {
+          const res = await window.rtlFetch("api/coverage/presets/" + encodeURIComponent(id), {
+            method: "DELETE",
+          });
+          const body = await res.json();
+          if (!body.ok) {
+            showMsg(body.error || "Не удалось удалить", false);
+            return;
+          }
+          STATE.meta.user_presets = body.user_presets || [];
+          if (preset) preset.value = "";
+          applySelectedPreset("");
+          fillPresets();
+          showMsg("Срез удалён.", true);
+        } catch (err) {
+          showMsg((err && err.message) || "Сервер не отвечает.", false);
+        } finally {
+          presetDelete.disabled = false;
+        }
       });
     }
     document.querySelectorAll(".cov-mini[data-check]").forEach(function (btn) {
@@ -1024,7 +1159,7 @@
     mountPicker($("cov-mops-activity"), "cov-activity-mop", body.mops);
     mountPicker($("cov-planned"), "cov-planned", body.planned_filters || []);
     fillPresets();
-    applyPreset("");
+    applySelectedPreset("");
     setUniverse(STATE.universe, false);
   }
 

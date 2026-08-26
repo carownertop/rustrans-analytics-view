@@ -1085,6 +1085,22 @@ body.cov-resizing {
   gap: 8px;
   margin: 8px 0 10px;
 }
+.cov-picker-grid[hidden],
+#cov-company-fields[hidden],
+#cov-lead-fields[hidden] {
+  display: none !important;
+}
+.cov-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.cov-preset-row select {
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: none;
+}
 .cov-picker-host .empty {
   margin: 0;
   font-size: 11px;
