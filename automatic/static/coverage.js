@@ -283,7 +283,7 @@
     if (q) {
       rows = rows.filter(function (r) {
         const eventBlob = (r.events || []).map(function (e) {
-          return [e.label, e.subject, e.text, e.mop, e.author, e.duration, e.call_status].join(" ");
+          return [e.label, e.subject, e.text, e.mop, e.author, e.duration, e.call_status, e.status, e.direction].join(" ");
         }).join(" ");
         return [r.name, r.mop, r.rfm, r.work_status, r.client_type, r.direction,
           r.coverage_title, r.last_kind, r.last_subject, r.last_text, eventBlob]
@@ -500,13 +500,16 @@
           const people = [];
           if (ev.mop) people.push("Ответственный: " + escapeHtml(ev.mop));
           if (ev.author) people.push("Создал: " + escapeHtml(ev.author));
+          if (ev.direction) people.push(escapeHtml(ev.direction));
           if (ev.duration) people.push("Длительность: " + escapeHtml(ev.duration));
-          if (ev.call_status) {
-            const stCls = ev.call_status_id === "ok" ? "ok"
-              : ev.call_status_id === "missed" ? "bad"
-              : ev.call_status_id === "short" ? "mail" : "";
+          const st = ev.status || ev.call_status || "";
+          const stId = ev.status_id || ev.call_status_id || "";
+          if (st) {
+            const stCls = stId === "ok" || stId === "opened" || stId === "inbound" ? "ok"
+              : stId === "missed" || stId === "error" ? "bad"
+              : stId === "short" || stId === "no_read" ? "mail" : "";
             people.push("Статус: <span class=\"cov-call-st " + stCls + "\">" +
-              escapeHtml(ev.call_status) + "</span>");
+              escapeHtml(st) + "</span>");
           }
           const meta = people.length
             ? "<div class=\"cov-event-meta\">" + people.join(" · ") + "</div>"
