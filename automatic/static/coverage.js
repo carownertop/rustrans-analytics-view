@@ -13,6 +13,7 @@
     colWidths: {},
     colFilters: {},
     openFilter: null,
+    openPicker: null,
     booted: false,
   };
 
@@ -85,6 +86,174 @@
         escapeHtml(item.title) + meta + "</label>";
     }).join("");
   }
+  function pickerStore(name) {
+    return document.querySelector(".cov-picker-store[data-name=\"" + name + "\"]");
+  }
+  function pickerSummaryFromList(list, all, set) {
+    const total = list.length;
+    if (!total) return "—";
+    if (all) return "Все · " + total;
+    const picked = list.filter(function (item) { return set[String(item.id)]; });
+    if (picked.length === total) return "Все · " + total;
+    if (!picked.length) return "Ничего не выбрано";
+    if (picked.length <= 2) return picked.map(function (item) { return item.title; }).join(", ");
+    return picked.length + " из " + total;
+  }
+  function pickerSummaryText(name) {
+    const inputs = document.querySelectorAll("input[name=\"" + name + "\"]");
+    const total = inputs.length;
+    if (!total) return "—";
+    const picked = [];
+    inputs.forEach(function (inp) {
+      if (!inp.checked) return;
+      const label = inp.closest("label");
+      const textEl = label ? label.querySelector("span") : null;
+      picked.push(textEl ? textEl.textContent.replace(/\s+/g, " ").trim() : inp.value);
+    });
+    if (picked.length === total) return "Все · " + total;
+    if (!picked.length) return "Ничего не выбрано";
+    if (picked.length <= 2) return picked.join(", ");
+    return picked.length + " из " + total;
+  }
+  function updatePickerSummary(name) {
+    document.querySelectorAll(".cov-picker[data-name=\"" + name + "\"] .cov-picker-summary").forEach(function (el) {
+      el.textContent = pickerSummaryText(name);
+    });
+    const btn = document.querySelector(".cov-picker[data-name=\"" + name + "\"] .cov-picker-btn");
+    if (btn) btn.classList.toggle("cov-picker-btn-empty", pickerSummaryText(name) === "Ничего не выбрано");
+  }
+  function updatePickerLabels() {
+    document.querySelectorAll(".cov-picker-host").forEach(function (host) {
+      const name = host.getAttribute("data-name");
+      const label = host.getAttribute("data-label") || name;
+      const el = host.querySelector(".cov-picker-label");
+      if (el) el.textContent = label;
+    });
+  }
+  function mountPicker(host, name, items, checkedIds) {
+    if (!host) return;
+    const list = items || [];
+    const label = host.getAttribute("data-label") || name;
+    host.setAttribute("data-name", name);
+    if (!list.length) {
+      host.innerHTML = "<p class=\"empty\">Нет значений</p>";
+      return;
+    }
+    const all = !(checkedIds && checkedIds.length);
+    const set = {};
+    (checkedIds || []).forEach(function (id) { set[String(id)] = true; });
+    const storeHtml = list.map(function (item) {
+      const on = all || set[String(item.id)];
+      const meta = item.cards != null ? " <span class=\"meta\">" + item.cards + "</span>" : "";
+      return "<label><input type=\"checkbox\" name=\"" + escapeHtml(name) + "\" value=\"" +
+        escapeHtml(item.id) + "\"" + (on ? " checked" : "") + " /> " +
+        "<span>" + escapeHtml(item.title) + meta + "</span></label>";
+    }).join("");
+    host.innerHTML =
+      "<div class=\"cov-picker\" data-name=\"" + escapeHtml(name) + "\">" +
+      "<button type=\"button\" class=\"cov-picker-btn\" aria-haspopup=\"listbox\">" +
+      "<span class=\"cov-picker-label\">" + escapeHtml(label) + "</span>" +
+      "<span class=\"cov-picker-summary\">" + escapeHtml(pickerSummaryFromList(list, all, set)) + "</span>" +
+      "<span class=\"cov-picker-chev\">▾</span></button>" +
+      "<div class=\"cov-picker-store\" data-name=\"" + escapeHtml(name) + "\" hidden>" + storeHtml + "</div></div>";
+    const btn = host.querySelector(".cov-picker-btn");
+    if (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openPickerPop(name, btn);
+      });
+    }
+    updatePickerSummary(name);
+  }
+  function closePickerPop() {
+    STATE.openPicker = null;
+    const pop = $("cov-picker-pop");
+    if (pop) pop.hidden = true;
+    document.querySelectorAll(".cov-picker-btn.on").forEach(function (btn) {
+      btn.classList.remove("on");
+    });
+  }
+  function openPickerPop(name, anchor) {
+    const store = pickerStore(name);
+    if (!store) return;
+    if (STATE.openPicker === name) {
+      closePickerPop();
+      return;
+    }
+    closeColFilter();
+    let pop = $("cov-picker-pop");
+    if (!pop) {
+      pop = document.createElement("div");
+      pop.id = "cov-picker-pop";
+      pop.className = "cov-picker-pop";
+      document.body.appendChild(pop);
+    }
+    STATE.openPicker = name;
+    anchor.classList.add("on");
+    const title = anchor.querySelector(".cov-picker-label");
+    pop.hidden = false;
+    pop.innerHTML =
+      "<div class=\"cov-picker-pop-head\">" + escapeHtml(title ? title.textContent : name) + "</div>" +
+      "<input type=\"search\" class=\"cov-picker-pop-q\" placeholder=\"Поиск…\" />" +
+      "<div class=\"cov-picker-pop-actions\">" +
+      "<button type=\"button\" data-act=\"all\">Все</button>" +
+      "<button type=\"button\" data-act=\"none\">Сбросить</button>" +
+      "<button type=\"button\" data-act=\"done\" class=\"primary\">Готово</button></div>" +
+      "<div class=\"cov-picker-pop-list\">" + store.innerHTML + "</div>";
+    const listEl = pop.querySelector(".cov-picker-pop-list");
+    listEl.querySelectorAll("input").forEach(function (inp, idx) {
+      const src = store.querySelectorAll("input")[idx];
+      if (src) inp.checked = src.checked;
+    });
+    const rect = anchor.getBoundingClientRect();
+    const width = Math.min(360, window.innerWidth - 24);
+    let left = rect.left;
+    if (left + width > window.innerWidth - 12) left = Math.max(12, window.innerWidth - width - 12);
+    pop.style.width = width + "px";
+    pop.style.left = left + "px";
+    pop.style.top = Math.min(rect.bottom + 6, window.innerHeight - 320) + "px";
+    const q = pop.querySelector(".cov-picker-pop-q");
+    if (q) {
+      q.addEventListener("input", function () {
+        const needle = q.value.trim().toLowerCase();
+        listEl.querySelectorAll("label").forEach(function (lab) {
+          const text = (lab.textContent || "").toLowerCase();
+          lab.style.display = !needle || text.indexOf(needle) >= 0 ? "" : "none";
+        });
+      });
+      setTimeout(function () { q.focus(); }, 0);
+    }
+    pop.onclick = function (e) {
+      e.stopPropagation();
+      const btn = e.target.closest ? e.target.closest("[data-act]") : null;
+      if (!btn) return;
+      const act = btn.getAttribute("data-act");
+      if (act === "all") {
+        listEl.querySelectorAll("label").forEach(function (lab) {
+          if (lab.style.display === "none") return;
+          const inp = lab.querySelector("input");
+          if (inp) inp.checked = true;
+        });
+        return;
+      }
+      if (act === "none") {
+        listEl.querySelectorAll("input").forEach(function (inp) {
+          if (inp.closest("label").style.display === "none") return;
+          inp.checked = false;
+        });
+        return;
+      }
+      if (act === "done") {
+        listEl.querySelectorAll("input").forEach(function (inp, idx) {
+          const src = store.querySelectorAll("input")[idx];
+          if (src) src.checked = inp.checked;
+        });
+        updatePickerSummary(name);
+        closePickerPop();
+      }
+    };
+  }
   function selected(name) {
     return Array.prototype.slice.call(document.querySelectorAll("input[name=\"" + name + "\"]:checked"))
       .map(function (el) { return el.value; });
@@ -95,11 +264,13 @@
     document.querySelectorAll("input[name=\"" + name + "\"]").forEach(function (el) {
       el.checked = !!set[el.value];
     });
+    updatePickerSummary(name);
   }
   function checkAll(name, on) {
     document.querySelectorAll("input[name=\"" + name + "\"]").forEach(function (el) {
       el.checked = on;
     });
+    updatePickerSummary(name);
   }
   function fillPresets() {
     const select = $("cov-preset");
@@ -147,10 +318,9 @@
     if (company) company.hidden = STATE.universe !== "company";
     if (lead) lead.hidden = STATE.universe !== "lead";
     const copy = cardMopCopy(STATE.universe);
-    const label = $("cov-card-mop-label");
-    const hint = $("cov-card-mop-hint");
-    if (label) label.textContent = copy.label;
-    if (hint) hint.textContent = copy.hint;
+    const companyHost = $("cov-mops-company");
+    if (companyHost) companyHost.setAttribute("data-label", copy.label);
+    updatePickerLabels();
     const mopCol = COLS.filter(function (c) { return c.key === "mop"; })[0];
     if (mopCol) mopCol.title = copy.col;
     fillPresets();
@@ -752,13 +922,24 @@
       });
     }
     document.addEventListener("click", function (e) {
-      const pop = $("cov-col-filter-pop");
-      if (!pop || pop.hidden) return;
-      if (e.target.closest && (e.target.closest("#cov-col-filter-pop") || e.target.closest(".cov-th-filter"))) return;
-      closeColFilter();
+      const colPop = $("cov-col-filter-pop");
+      if (colPop && !colPop.hidden) {
+        if (!(e.target.closest && (e.target.closest("#cov-col-filter-pop") || e.target.closest(".cov-th-filter")))) {
+          closeColFilter();
+        }
+      }
+      const pickerPop = $("cov-picker-pop");
+      if (pickerPop && !pickerPop.hidden) {
+        if (!(e.target.closest && (e.target.closest("#cov-picker-pop") || e.target.closest(".cov-picker-btn")))) {
+          closePickerPop();
+        }
+      }
     });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeColFilter();
+      if (e.key === "Escape") {
+        closeColFilter();
+        closePickerPop();
+      }
     });
     must("cov-btn").addEventListener("click", async function () {
       const btn = must("cov-btn");
@@ -833,17 +1014,18 @@
   function fillMeta(body) {
     STATE.meta = body;
     const enums = body.enums || {};
-    checks($("cov-rfm"), "cov-rfm", enums.rfm);
-    checks($("cov-work"), "cov-work", enums.work_status);
-    checks($("cov-type"), "cov-type", enums.client_type);
-    checks($("cov-dir"), "cov-dir", enums.direction);
-    checks($("cov-lead-sem"), "cov-lead-sem", body.lead_semantic);
-    checks($("cov-mops-company"), "cov-company-mop", body.mops);
-    checks($("cov-mops-other"), "cov-other-mop", body.other_assignees || []);
-    checks($("cov-mops-activity"), "cov-activity-mop", body.mops);
-    checks($("cov-planned"), "cov-planned", body.planned_filters || []);
+    mountPicker($("cov-rfm"), "cov-rfm", enums.rfm);
+    mountPicker($("cov-work"), "cov-work", enums.work_status);
+    mountPicker($("cov-type"), "cov-type", enums.client_type);
+    mountPicker($("cov-dir"), "cov-dir", enums.direction);
+    mountPicker($("cov-lead-sem"), "cov-lead-sem", body.lead_semantic);
+    mountPicker($("cov-mops-company"), "cov-company-mop", body.mops);
+    mountPicker($("cov-mops-other"), "cov-other-mop", body.other_assignees || []);
+    mountPicker($("cov-mops-activity"), "cov-activity-mop", body.mops);
+    mountPicker($("cov-planned"), "cov-planned", body.planned_filters || []);
     fillPresets();
     applyPreset("");
+    setUniverse(STATE.universe, false);
   }
 
   async function boot() {

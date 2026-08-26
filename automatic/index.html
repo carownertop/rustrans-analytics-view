@@ -8,10 +8,10 @@
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <meta http-equiv="Cache-Control" content="no-cache" />
-  <link rel="stylesheet" href="static/brand.css?v=mark5" />
+  <link rel="stylesheet" href="static/brand.css?v=mark6" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub4"></script>
-  <script src="static/coverage.js?v=16"></script>
+  <script src="static/coverage.js?v=17"></script>
 </head>
 <body>
   <header class="head">
@@ -119,7 +119,7 @@
             </button>
             <div class="adv-body">
               <div>
-                <p class="adv-note">Пустые «Созданы» = любые даты. В блоках — «Все» / «Сбросить».</p>
+                <p class="adv-note">Пустые «Созданы» = любые даты. Фильтры — кнопки с выпадающим списком.</p>
                 <div class="filters filters-compact">
                   <div>
                     <label class="field-label" for="cov-created-from">Созданы с</label>
@@ -131,103 +131,21 @@
                   </div>
                 </div>
 
-                <div class="cov-field cov-field-dense">
-                  <div class="cov-field-head">
-                    <span class="field-label" id="cov-card-mop-label">Ответственный за компанию</span>
-                    <div class="cov-field-actions">
-                      <button type="button" class="cov-mini" data-check="cov-company-mop" data-on="1">Все</button>
-                      <button type="button" class="cov-mini" data-check="cov-company-mop" data-on="0">Сбросить</button>
-                    </div>
-                  </div>
-                  <div class="mops mops-dense" id="cov-mops-company"></div>
+                <div class="cov-picker-grid">
+                  <div id="cov-mops-company" class="cov-picker-host" data-name="cov-company-mop" data-label="Ответственный за компанию"></div>
+                  <div id="cov-mops-other" class="cov-picker-host" data-name="cov-other-mop" data-label="Остальные сотрудники"></div>
+                  <div id="cov-mops-activity" class="cov-picker-host" data-name="cov-activity-mop" data-label="Ответственный за дела"></div>
+                  <div id="cov-planned" class="cov-picker-host" data-name="cov-planned" data-label="Запланированные дела"></div>
                 </div>
 
-                <div class="cov-field cov-field-dense">
-                  <div class="cov-field-head">
-                    <span class="field-label" id="cov-other-mop-label">Остальные сотрудники</span>
-                    <div class="cov-field-actions">
-                      <button type="button" class="cov-mini" data-check="cov-other-mop" data-on="1">Все</button>
-                      <button type="button" class="cov-mini" data-check="cov-other-mop" data-on="0">Сбросить</button>
-                    </div>
-                  </div>
-                  <div class="mops mops-dense" id="cov-mops-other"></div>
+                <div id="cov-company-fields" class="cov-picker-grid">
+                  <div id="cov-rfm" class="cov-picker-host" data-name="cov-rfm" data-label="RFM"></div>
+                  <div id="cov-work" class="cov-picker-host" data-name="cov-work" data-label="Статус работы с клиентом"></div>
+                  <div id="cov-type" class="cov-picker-host" data-name="cov-type" data-label="Тип клиента"></div>
+                  <div id="cov-dir" class="cov-picker-host" data-name="cov-dir" data-label="Направление"></div>
                 </div>
-
-                <div class="cov-field cov-field-dense">
-                  <div class="cov-field-head">
-                    <span class="field-label">Ответственный за дела</span>
-                    <div class="cov-field-actions">
-                      <button type="button" class="cov-mini" data-check="cov-activity-mop" data-on="1">Все</button>
-                      <button type="button" class="cov-mini" data-check="cov-activity-mop" data-on="0">Сбросить</button>
-                    </div>
-                  </div>
-                  <div class="mops mops-dense" id="cov-mops-activity"></div>
-                </div>
-
-                <div class="cov-field cov-field-dense">
-                  <div class="cov-field-head">
-                    <span class="field-label">Запланированные дела</span>
-                    <div class="cov-field-actions">
-                      <button type="button" class="cov-mini" data-check="cov-planned" data-on="1">Все</button>
-                      <button type="button" class="cov-mini" data-check="cov-planned" data-on="0">Сбросить</button>
-                    </div>
-                  </div>
-                  <div class="mops mops-dense" id="cov-planned"></div>
-                </div>
-
-                <div id="cov-company-fields">
-                  <div class="cov-field cov-field-dense">
-                    <div class="cov-field-head">
-                      <span class="field-label">RFM</span>
-                      <div class="cov-field-actions">
-                        <button type="button" class="cov-mini" data-check="cov-rfm" data-on="1">Все</button>
-                        <button type="button" class="cov-mini" data-check="cov-rfm" data-on="0">Сбросить</button>
-                      </div>
-                    </div>
-                    <div class="mops mops-dense" id="cov-rfm"></div>
-                  </div>
-                  <div class="cov-field cov-field-dense">
-                    <div class="cov-field-head">
-                      <span class="field-label">Статус работы с клиентом</span>
-                      <div class="cov-field-actions">
-                        <button type="button" class="cov-mini" data-check="cov-work" data-on="1">Все</button>
-                        <button type="button" class="cov-mini" data-check="cov-work" data-on="0">Сбросить</button>
-                      </div>
-                    </div>
-                    <div class="mops mops-dense" id="cov-work"></div>
-                  </div>
-                  <div class="cov-field cov-field-dense">
-                    <div class="cov-field-head">
-                      <span class="field-label">Тип клиента</span>
-                      <div class="cov-field-actions">
-                        <button type="button" class="cov-mini" data-check="cov-type" data-on="1">Все</button>
-                        <button type="button" class="cov-mini" data-check="cov-type" data-on="0">Сбросить</button>
-                      </div>
-                    </div>
-                    <div class="mops mops-dense" id="cov-type"></div>
-                  </div>
-                  <div class="cov-field cov-field-dense">
-                    <div class="cov-field-head">
-                      <span class="field-label">Направление</span>
-                      <div class="cov-field-actions">
-                        <button type="button" class="cov-mini" data-check="cov-dir" data-on="1">Все</button>
-                        <button type="button" class="cov-mini" data-check="cov-dir" data-on="0">Сбросить</button>
-                      </div>
-                    </div>
-                    <div class="mops mops-dense" id="cov-dir"></div>
-                  </div>
-                </div>
-                <div id="cov-lead-fields" hidden>
-                  <div class="cov-field cov-field-dense">
-                    <div class="cov-field-head">
-                      <span class="field-label">Статус лида</span>
-                      <div class="cov-field-actions">
-                        <button type="button" class="cov-mini" data-check="cov-lead-sem" data-on="1">Все</button>
-                        <button type="button" class="cov-mini" data-check="cov-lead-sem" data-on="0">Сбросить</button>
-                      </div>
-                    </div>
-                    <div class="mops mops-dense" id="cov-lead-sem"></div>
-                  </div>
+                <div id="cov-lead-fields" class="cov-picker-grid" hidden>
+                  <div id="cov-lead-sem" class="cov-picker-host" data-name="cov-lead-sem" data-label="Статус лида"></div>
                 </div>
               </div>
             </div>
