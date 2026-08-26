@@ -100,6 +100,30 @@
       return "<option value=\"" + escapeHtml(p.id) + "\">" + escapeHtml(p.title) + "</option>";
     }).join("");
   }
+  function cardMopCopy(universe) {
+    if (universe === "lead") {
+      return {
+        label: "Ответственный за лид",
+        hint: "Кого берём в срез лидов (ASSIGNED лида).",
+        col: "Отв. за лид",
+        detail: "Отв. за лид",
+      };
+    }
+    if (universe === "contact") {
+      return {
+        label: "Ответственный за контакт",
+        hint: "Кого берём в срез контактов (ASSIGNED контакта).",
+        col: "Отв. за контакт",
+        detail: "Отв. за контакт",
+      };
+    }
+    return {
+      label: "Ответственный за компанию",
+      hint: "Кого берём в срез компаний (ASSIGNED компании).",
+      col: "Отв. за компанию",
+      detail: "Отв. за компанию",
+    };
+  }
   function setUniverse(universe, syncUi) {
     STATE.universe = universe || "company";
     if (syncUi !== false) {
@@ -111,6 +135,13 @@
     const lead = $("cov-lead-fields");
     if (company) company.hidden = STATE.universe !== "company";
     if (lead) lead.hidden = STATE.universe !== "lead";
+    const copy = cardMopCopy(STATE.universe);
+    const label = $("cov-card-mop-label");
+    const hint = $("cov-card-mop-hint");
+    if (label) label.textContent = copy.label;
+    if (hint) hint.textContent = copy.hint;
+    const mopCol = COLS.filter(function (c) { return c.key === "mop"; })[0];
+    if (mopCol) mopCol.title = copy.col;
     fillPresets();
   }
   function applyPreset(id) {
@@ -286,7 +317,7 @@
       "<span class=\"cov-detail-count\">" + (row.events_count || events.length) + " событий</span></div>" +
       "<div class=\"cov-detail-meta\">" +
       "<span>" + badge(row) + "</span>" +
-      "<span>Отв. за компанию: " + escapeHtml(row.mop) + "</span>" +
+      "<span>" + escapeHtml(cardMopCopy(row.universe || STATE.universe).detail) + ": " + escapeHtml(row.mop) + "</span>" +
       "<span>RFM: " + escapeHtml(row.rfm) + "</span>" +
       "<span>" + escapeHtml(row.last_kind || "Нет касания") +
       (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</span>" +
