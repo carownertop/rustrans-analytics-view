@@ -247,7 +247,7 @@
     if (q) {
       rows = rows.filter(function (r) {
         const eventBlob = (r.events || []).map(function (e) {
-          return [e.label, e.subject, e.text, e.mop].join(" ");
+          return [e.label, e.subject, e.text, e.mop, e.author].join(" ");
         }).join(" ");
         return [r.name, r.mop, r.rfm, r.work_status, r.client_type, r.direction,
           r.coverage_title, r.last_kind, r.last_subject, r.last_text, eventBlob]
@@ -312,8 +312,13 @@
     const timeline = events.length
       ? "<div class=\"cov-timeline\">" + events.map(function (ev) {
           const head = escapeHtml(ev.label || ev.kind || "Событие") +
-            (ev.at ? " · " + escapeHtml(ev.at) : "") +
-            (ev.mop ? " · " + escapeHtml(ev.mop) : "");
+            (ev.at ? " · " + escapeHtml(ev.at) : "");
+          const people = [];
+          if (ev.mop) people.push("Ответственный: " + escapeHtml(ev.mop));
+          if (ev.author) people.push("Создал: " + escapeHtml(ev.author));
+          const meta = people.length
+            ? "<div class=\"cov-event-meta\">" + people.join(" · ") + "</div>"
+            : "";
           const title = ev.url
             ? "<a class=\"file-link\" href=\"" + escapeHtml(ev.url) +
               "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(ev.subject || "Без темы") + "</a>"
@@ -322,7 +327,7 @@
             ? "<div class=\"cov-quote\">" + escapeHtml(ev.text) + "</div>"
             : "<p class=\"hint\" style=\"margin:4px 0 0\">Без описания в деле</p>";
           return "<div class=\"cov-event\"><div class=\"cov-event-head\">" + head +
-            "</div><div class=\"cov-event-title\">" + title + "</div>" + body + "</div>";
+            "</div>" + meta + "<div class=\"cov-event-title\">" + title + "</div>" + body + "</div>";
         }).join("") + "</div>"
       : "<p class=\"hint\" style=\"margin:8px 0 0\">В периоде нет дел/звонков/писем и нет открытых сделок/СП</p>";
     panel.innerHTML =

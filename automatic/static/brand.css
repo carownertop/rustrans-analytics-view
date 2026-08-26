@@ -842,6 +842,12 @@ table.flat tbody tr:nth-child(even) td:first-child { background: #fff; }
   text-transform: uppercase;
   color: var(--muted);
 }
+.cov-event-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #16304f;
+}
 .cov-event-title {
   margin-top: 4px;
   font-size: 13px;
