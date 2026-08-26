@@ -870,6 +870,7 @@ body.cov-resizing {
   border-radius: 999px;
 }
 .cov-badge.ok { background: var(--ok-bg); color: var(--ok); }
+.cov-badge.partial { background: #fff4e6; color: #b45309; }
 .cov-badge.mail { background: #eef2f8; color: var(--navy); }
 .cov-badge.bad { background: var(--err-bg); color: var(--red); }
 .cov-field { margin: 14px 0 10px; }

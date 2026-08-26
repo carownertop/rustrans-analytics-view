@@ -21,7 +21,7 @@
     { key: "mop", title: "Отв. за компанию" },
     { key: "rfm", title: "RFM" },
     { key: "coverage_title", title: "Проработка" },
-    { key: "last_kind", title: "Тип" },
+    { key: "event_types", title: "Тип" },
     { key: "last_subject", title: "Тема / суть" },
     { key: "events_count", title: "Дел" },
     { key: "has_planned", title: "План" },
@@ -32,7 +32,7 @@
     { key: "sp_links", title: "Открытые СП" },
   ];
   const COL_DEFAULT_W = {
-    name: 220, mop: 140, rfm: 90, coverage_title: 120, last_kind: 140,
+    name: 220, mop: 140, rfm: 90, coverage_title: 120, event_types: 160,
     last_subject: 220, events_count: 64, has_planned: 64, has_overdue: 72,
     has_deal: 72, deal_links: 160, has_sp: 56, sp_links: 160,
   };
@@ -225,7 +225,9 @@
     };
   }
   function badge(row) {
-    const cls = row.coverage === "touched" ? "ok" : row.coverage === "email" ? "mail" : "bad";
+    const cls = row.coverage === "touched" ? "ok"
+      : row.coverage === "partial" ? "partial"
+      : "bad";
     return "<span class=\"cov-badge " + cls + "\">" + escapeHtml(row.coverage_title) + "</span>";
   }
   function linkList(items) {
@@ -236,14 +238,24 @@
         "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(link.title || link.id) + "</a>";
     }).join("<br>");
   }
+  function matchesCovFilter(row) {
+    const f = STATE.covFilter;
+    if (f === "all") return true;
+    if (f === "touched" || f === "partial" || f === "none") return row.coverage === f;
+    if (f === "email") {
+      return row.coverage === "partial" && (row.emails || 0) > 0 &&
+        !(row.weak_calls || 0) && !(row.comments_count || 0);
+    }
+    return true;
+  }
   function sortValue(row, key) {
     if (key === "coverage" || key === "coverage_title") {
-      return ({ none: 0, email: 1, touched: 2 })[row.coverage] || 9;
+      return ({ none: 0, partial: 1, touched: 2 })[row.coverage] || 9;
     }
     if (key === "has_deal" || key === "has_sp" || key === "has_planned" || key === "has_overdue") return row[key] ? 1 : 0;
     if (key === "deal_links" || key === "sp_links") return (row[key] || []).length;
     if (key === "events_count") return row.events_count || (row.events || []).length || 0;
-    if (key === "last_kind") return ((row.last_kind || "") + " " + (row.last_at || "")).toLowerCase();
+    if (key === "event_types") return String(row.event_types || row.last_kind || "").toLowerCase();
     return String(row[key] == null ? "" : row[key]).toLowerCase();
   }
   function cellFilterText(row, key) {
@@ -258,8 +270,8 @@
     if (key === "events_count") {
       return String(row.events_count || (row.events || []).length || 0);
     }
-    if (key === "last_kind") {
-      return ((row.last_kind || "—") + (row.last_at ? " · " + row.last_at : "")).trim();
+    if (key === "event_types") {
+      return String(row.event_types || row.last_kind || "—");
     }
     if (key === "last_subject") {
       return String(row.last_subject || row.last_text || "—");
@@ -278,7 +290,7 @@
     const q = (STATE.search || "").trim().toLowerCase();
     let rows = STATE.rows.slice();
     if (STATE.covFilter !== "all") {
-      rows = rows.filter(function (r) { return r.coverage === STATE.covFilter; });
+      rows = rows.filter(matchesCovFilter);
     }
     if (q) {
       rows = rows.filter(function (r) {
@@ -286,7 +298,7 @@
           return [e.label, e.subject, e.text, e.mop, e.author, e.duration, e.call_status, e.status, e.direction].join(" ");
         }).join(" ");
         return [r.name, r.mop, r.rfm, r.work_status, r.client_type, r.direction,
-          r.coverage_title, r.last_kind, r.last_subject, r.last_text, eventBlob]
+          r.coverage_title, r.event_types, r.last_kind, r.last_subject, r.last_text, eventBlob]
           .join(" ").toLowerCase().indexOf(q) >= 0;
       });
     }
@@ -456,6 +468,7 @@
     const items = [
       ["all", "В срезе", summary.total],
       ["touched", "Потроганы", summary.touched],
+      ["partial", "Неполное касание", summary.partial],
       ["email", "Только письмо", summary.email],
       ["none", "Тишина", summary.none],
       ["deal", "Со сделкой", summary.with_deal],
@@ -465,7 +478,7 @@
       const key = item[0];
       const label = item[1];
       const val = item[2] == null ? 0 : item[2];
-      const clickable = key === "all" || key === "touched" || key === "email" || key === "none";
+      const clickable = key === "all" || key === "touched" || key === "partial" || key === "email" || key === "none";
       const on = clickable && ((key === "all" && STATE.covFilter === "all") || key === STATE.covFilter);
       return "<div class=\"cov-kpi" + (on ? " on" : "") + "\" data-cov=\"" +
         (clickable ? key : "") + "\"><span>" + label + "</span><b>" + val + "</b></div>";
@@ -534,9 +547,9 @@
       "<span>" + badge(row) + "</span>" +
       "<span>" + escapeHtml(cardMopCopy(row.universe || STATE.universe).detail) + ": " + escapeHtml(row.mop) + "</span>" +
       "<span>RFM: " + escapeHtml(row.rfm) + "</span>" +
-      "<span>" + escapeHtml(row.last_kind || "Нет касания") +
-      (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</span>" +
-      "<span>Касаний: " + (row.touches || 0) + " · Писем: " + (row.emails || 0) + "</span>" +
+      "<span>Типы за период: " + escapeHtml(row.event_types || row.last_kind || "—") + "</span>" +
+      "<span>Касаний: " + (row.touches || 0) + " · Писем: " + (row.emails || 0) +
+      ((row.weak_calls || 0) ? " · Попыток звонка: " + row.weak_calls : "") + "</span>" +
       "<span>Сделка: " + (row.has_deal ? "да" : "нет") + " · СП: " +
       (row.has_sp ? "да" : "нет") + "</span></div>" +
       ((row.deal_links && row.deal_links.length)
@@ -596,8 +609,7 @@
             "<td style=\"" + colStyle("mop") + "\">" + escapeHtml(row.mop) + "</td>" +
             "<td style=\"" + colStyle("rfm") + "\">" + escapeHtml(row.rfm) + "</td>" +
             "<td style=\"" + colStyle("coverage_title") + "\">" + badge(row) + "</td>" +
-            "<td style=\"" + colStyle("last_kind") + "\">" + escapeHtml(row.last_kind || "—") +
-            (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</td>" +
+            "<td style=\"" + colStyle("event_types") + "\">" + escapeHtml(row.event_types || "—") + "</td>" +
             "<td class=\"cov-subject\" style=\"" + colStyle("last_subject") + "\" title=\"" + escapeHtml(subject) + "\">" +
             escapeHtml(short) + "</td>" +
             "<td style=\"" + colStyle("events_count") + "\"><button type=\"button\" class=\"cov-events-btn\" data-i=\"" +
@@ -787,7 +799,11 @@
         const summary = Object.assign({}, STATE.summary || {}, {
           total: STATE.view.length,
           touched: STATE.view.filter(function (r) { return r.coverage === "touched"; }).length,
-          email: STATE.view.filter(function (r) { return r.coverage === "email"; }).length,
+          partial: STATE.view.filter(function (r) { return r.coverage === "partial"; }).length,
+          email: STATE.view.filter(function (r) {
+            return r.coverage === "partial" && (r.emails || 0) > 0 &&
+              !(r.weak_calls || 0) && !(r.comments_count || 0);
+          }).length,
           none: STATE.view.filter(function (r) { return r.coverage === "none"; }).length,
           with_deal: STATE.view.filter(function (r) { return r.has_deal; }).length,
           with_sp: STATE.view.filter(function (r) { return r.has_sp; }).length,
