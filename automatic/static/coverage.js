@@ -10,6 +10,9 @@
     sortDir: 1,
     covFilter: "all",
     search: "",
+    colWidths: {},
+    colFilters: {},
+    openFilter: null,
     booted: false,
   };
 
@@ -28,6 +31,11 @@
     { key: "has_sp", title: "СП" },
     { key: "sp_links", title: "Открытые СП" },
   ];
+  const COL_DEFAULT_W = {
+    name: 220, mop: 140, rfm: 90, coverage_title: 120, last_kind: 140,
+    last_subject: 220, events_count: 64, has_planned: 64, has_overdue: 72,
+    has_deal: 72, deal_links: 160, has_sp: 56, sp_links: 160,
+  };
 
   function $(id) {
     return document.getElementById(id);
@@ -238,7 +246,35 @@
     if (key === "last_kind") return ((row.last_kind || "") + " " + (row.last_at || "")).toLowerCase();
     return String(row[key] == null ? "" : row[key]).toLowerCase();
   }
-  function visibleRows() {
+  function cellFilterText(row, key) {
+    if (key === "has_deal" || key === "has_sp" || key === "has_planned" || key === "has_overdue") {
+      return row[key] ? "да" : "нет";
+    }
+    if (key === "deal_links" || key === "sp_links") {
+      const list = row[key] || [];
+      if (!list.length) return "нет";
+      return list.map(function (l) { return l.title || l.id; }).join("; ");
+    }
+    if (key === "events_count") {
+      return String(row.events_count || (row.events || []).length || 0);
+    }
+    if (key === "last_kind") {
+      return ((row.last_kind || "—") + (row.last_at ? " · " + row.last_at : "")).trim();
+    }
+    if (key === "last_subject") {
+      return String(row.last_subject || row.last_text || "—");
+    }
+    if (key === "coverage_title") return String(row.coverage_title || "");
+    const raw = row[key];
+    const text = String(raw == null || raw === "" ? "—" : raw);
+    return text;
+  }
+  function hasColFilters() {
+    return Object.keys(STATE.colFilters).some(function (k) {
+      return STATE.colFilters[k] && STATE.colFilters[k].length;
+    });
+  }
+  function baseFilteredRows() {
     const q = (STATE.search || "").trim().toLowerCase();
     let rows = STATE.rows.slice();
     if (STATE.covFilter !== "all") {
@@ -254,6 +290,37 @@
           .join(" ").toLowerCase().indexOf(q) >= 0;
       });
     }
+    return rows;
+  }
+  function applyColFilters(rows, skipKey) {
+    return rows.filter(function (r) {
+      for (let i = 0; i < COLS.length; i++) {
+        const key = COLS[i].key;
+        if (skipKey && key === skipKey) continue;
+        const allowed = STATE.colFilters[key];
+        if (!allowed || !allowed.length) continue;
+        if (allowed.indexOf(cellFilterText(r, key)) < 0) return false;
+      }
+      return true;
+    });
+  }
+  function uniqueColValues(key) {
+    const rows = applyColFilters(baseFilteredRows(), key);
+    const seen = {};
+    const out = [];
+    rows.forEach(function (r) {
+      const v = cellFilterText(r, key);
+      if (seen[v]) return;
+      seen[v] = true;
+      out.push(v);
+    });
+    out.sort(function (a, b) {
+      return String(a).localeCompare(String(b), "ru", { numeric: true });
+    });
+    return out;
+  }
+  function visibleRows() {
+    let rows = applyColFilters(baseFilteredRows());
     const dir = STATE.sortDir;
     const key = STATE.sortKey;
     rows.sort(function (a, b) {
@@ -264,6 +331,123 @@
       return String(a.name || "").localeCompare(String(b.name || ""), "ru") * dir;
     });
     return rows;
+  }
+  function closeColFilter() {
+    STATE.openFilter = null;
+    const pop = $("cov-col-filter-pop");
+    if (pop) pop.hidden = true;
+  }
+  function openColFilter(key, anchor) {
+    let pop = $("cov-col-filter-pop");
+    if (!pop) {
+      pop = document.createElement("div");
+      pop.id = "cov-col-filter-pop";
+      pop.className = "cov-col-filter-pop";
+      document.body.appendChild(pop);
+    }
+    STATE.openFilter = key;
+    const values = uniqueColValues(key);
+    const selected = STATE.colFilters[key];
+    const allOn = !selected || !selected.length;
+    const set = {};
+    (selected || []).forEach(function (v) { set[v] = true; });
+    pop.hidden = false;
+    pop.innerHTML =
+      "<div class=\"cov-col-filter-head\">Фильтр: " + escapeHtml(
+        (COLS.filter(function (c) { return c.key === key; })[0] || {}).title || key
+      ) + "</div>" +
+      "<input type=\"search\" class=\"cov-col-filter-q\" placeholder=\"Найти значение…\" />" +
+      "<div class=\"cov-col-filter-actions\">" +
+      "<button type=\"button\" data-act=\"all\">Все</button>" +
+      "<button type=\"button\" data-act=\"none\">Сбросить</button>" +
+      "<button type=\"button\" data-act=\"apply\" class=\"primary\">Ок</button></div>" +
+      "<div class=\"cov-col-filter-list\">" +
+      (values.length ? values.map(function (v) {
+        const on = allOn || set[v];
+        return "<label><input type=\"checkbox\" value=\"" + escapeHtml(v) + "\"" +
+          (on ? " checked" : "") + " /> <span>" + escapeHtml(v) + "</span></label>";
+      }).join("") : "<p class=\"hint\" style=\"margin:8px\">Нет значений</p>") +
+      "</div>";
+    const rect = anchor.getBoundingClientRect();
+    const width = 280;
+    let left = rect.left;
+    if (left + width > window.innerWidth - 12) left = Math.max(12, window.innerWidth - width - 12);
+    pop.style.left = left + "px";
+    pop.style.top = Math.min(rect.bottom + 6, window.innerHeight - 320) + "px";
+    const q = pop.querySelector(".cov-col-filter-q");
+    if (q) {
+      q.addEventListener("input", function () {
+        const needle = q.value.trim().toLowerCase();
+        pop.querySelectorAll(".cov-col-filter-list label").forEach(function (lab) {
+          const text = (lab.textContent || "").toLowerCase();
+          lab.style.display = !needle || text.indexOf(needle) >= 0 ? "" : "none";
+        });
+      });
+      setTimeout(function () { q.focus(); }, 0);
+    }
+    pop.onclick = function (e) {
+      e.stopPropagation();
+      const btn = e.target.closest ? e.target.closest("[data-act]") : null;
+      if (!btn) return;
+      const act = btn.getAttribute("data-act");
+      if (act === "all") {
+        pop.querySelectorAll(".cov-col-filter-list input").forEach(function (el) {
+          if (el.closest("label").style.display === "none") return;
+          el.checked = true;
+        });
+        return;
+      }
+      if (act === "none") {
+        delete STATE.colFilters[key];
+        closeColFilter();
+        paintTable();
+        return;
+      }
+      if (act === "apply") {
+        const picked = Array.prototype.slice.call(pop.querySelectorAll(".cov-col-filter-list input:checked"))
+          .map(function (el) { return el.value; });
+        if (!picked.length || picked.length === values.length) delete STATE.colFilters[key];
+        else STATE.colFilters[key] = picked;
+        closeColFilter();
+        paintTable();
+      }
+    };
+  }
+  function bindColResize(tableRoot) {
+    tableRoot.querySelectorAll(".cov-col-resize").forEach(function (handle) {
+      handle.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const key = handle.getAttribute("data-resize");
+        const th = handle.closest("th");
+        if (!th || !key) return;
+        const startX = e.clientX;
+        const startW = th.getBoundingClientRect().width;
+        function onMove(ev) {
+          const w = Math.max(56, Math.round(startW + (ev.clientX - startX)));
+          STATE.colWidths[key] = w;
+          th.style.width = w + "px";
+          th.style.minWidth = w + "px";
+          th.style.maxWidth = w + "px";
+          const idx = COLS.findIndex(function (c) { return c.key === key; });
+          if (idx < 0) return;
+          tableRoot.querySelectorAll("tbody tr").forEach(function (tr) {
+            const td = tr.children[idx];
+            if (!td) return;
+            td.style.width = w + "px";
+            td.style.maxWidth = w + "px";
+          });
+        }
+        function onUp() {
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+          document.body.classList.remove("cov-resizing");
+        }
+        document.body.classList.add("cov-resizing");
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      });
+    });
   }
   function renderSummary(summary) {
     const box = $("cov-summary");
@@ -367,13 +551,17 @@
     STATE.view = visibleRows();
     const meta = $("cov-view-meta");
     if (meta) {
+      const filt = hasColFilters() ? " · есть фильтры по столбцам" : "";
       meta.textContent = "На экране " + STATE.view.length + " из " + STATE.rows.length +
-        ". Лента дел — в блоке над таблицей (клик по строке). «Сформировать файл» — Excel видимого среза.";
+        filt +
+        ". Тяните край заголовка — ширина колонки. ▾ в заголовке — фильтр по значениям. «Сформировать файл» — Excel видимого среза.";
     }
+    const clearBtn = $("cov-clear-col-filters");
+    if (clearBtn) clearBtn.hidden = !hasColFilters();
     const table = $("cov-table");
     if (!table) return;
-    if (!STATE.view.length) {
-      table.innerHTML = "<p class='empty'>Нет строк под текущий поиск и фильтр.</p>";
+    if (!STATE.rows.length) {
+      table.innerHTML = "<p class='empty'>Нет строк.</p>";
       if (!STATE.selected) paintDetail(null);
       return;
     }
@@ -381,37 +569,53 @@
       if (STATE.sortKey !== key && !(key === "coverage_title" && STATE.sortKey === "coverage")) return "";
       return STATE.sortDir > 0 ? " ↑" : " ↓";
     }
+    function colStyle(key) {
+      const w = STATE.colWidths[key] || COL_DEFAULT_W[key] || 120;
+      return "width:" + w + "px;min-width:" + w + "px;max-width:" + w + "px";
+    }
+    const bodyHtml = STATE.view.length
+      ? STATE.view.map(function (row, i) {
+          const on = STATE.selected && STATE.selected.id === row.id ? " on" : "";
+          const subject = row.last_subject || row.last_text || "—";
+          const short = subject.length > 70 ? subject.slice(0, 69) + "…" : subject;
+          const n = row.events_count || (row.events || []).length || 0;
+          return "<tr class=\"cov-row" + on + "\" data-i=\"" + i + "\">" +
+            "<td style=\"" + colStyle("name") + "\"><a class=\"file-link\" href=\"" + escapeHtml(row.url) +
+            "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(row.name) + "</a></td>" +
+            "<td style=\"" + colStyle("mop") + "\">" + escapeHtml(row.mop) + "</td>" +
+            "<td style=\"" + colStyle("rfm") + "\">" + escapeHtml(row.rfm) + "</td>" +
+            "<td style=\"" + colStyle("coverage_title") + "\">" + badge(row) + "</td>" +
+            "<td style=\"" + colStyle("last_kind") + "\">" + escapeHtml(row.last_kind || "—") +
+            (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</td>" +
+            "<td class=\"cov-subject\" style=\"" + colStyle("last_subject") + "\" title=\"" + escapeHtml(subject) + "\">" +
+            escapeHtml(short) + "</td>" +
+            "<td style=\"" + colStyle("events_count") + "\"><button type=\"button\" class=\"cov-events-btn\" data-i=\"" +
+            i + "\">" + n + " →</button></td>" +
+            "<td style=\"" + colStyle("has_planned") + "\">" + (row.has_planned ? "да" : "") + "</td>" +
+            "<td style=\"" + colStyle("has_overdue") + "\">" + (row.has_overdue ? "да" : "") + "</td>" +
+            "<td style=\"" + colStyle("has_deal") + "\">" + (row.has_deal ? "да" : "") + "</td>" +
+            "<td class=\"cov-links\" style=\"" + colStyle("deal_links") + "\">" + linkList(row.deal_links) + "</td>" +
+            "<td style=\"" + colStyle("has_sp") + "\">" + (row.has_sp ? "да" : "") + "</td>" +
+            "<td class=\"cov-links\" style=\"" + colStyle("sp_links") + "\">" + linkList(row.sp_links) + "</td></tr>";
+        }).join("")
+      : "<tr><td colspan=\"" + COLS.length + "\" class=\"empty\">Нет строк под текущий поиск и фильтры столбцов.</td></tr>";
     table.innerHTML =
-      "<div class=\"table-wrap cov-wrap\"><table class=\"flat\"><thead><tr>" +
+      "<div class=\"table-wrap cov-wrap\"><table class=\"flat cov-grid\"><thead><tr>" +
       COLS.map(function (c) {
-        return "<th data-sort=\"" + c.key + "\">" + c.title + arrow(c.key) + "</th>";
+        const active = STATE.colFilters[c.key] && STATE.colFilters[c.key].length;
+        return "<th data-sort=\"" + c.key + "\" style=\"" + colStyle(c.key) + "\">" +
+          "<span class=\"cov-th-main\">" +
+          "<span class=\"cov-th-title\">" + escapeHtml(c.title) + arrow(c.key) + "</span>" +
+          "<button type=\"button\" class=\"cov-th-filter" + (active ? " on" : "") +
+          "\" data-filter=\"" + c.key + "\" title=\"Фильтр по значениям\">▾</button>" +
+          "</span>" +
+          "<span class=\"cov-col-resize\" data-resize=\"" + c.key + "\" title=\"Тянуть ширину\"></span>" +
+          "</th>";
       }).join("") +
-      "</tr></thead><tbody>" +
-      STATE.view.map(function (row, i) {
-        const on = STATE.selected && STATE.selected.id === row.id ? " on" : "";
-        const subject = row.last_subject || row.last_text || "—";
-        const short = subject.length > 70 ? subject.slice(0, 69) + "…" : subject;
-        const n = row.events_count || (row.events || []).length || 0;
-        return "<tr class=\"cov-row" + on + "\" data-i=\"" + i + "\">" +
-          "<td><a class=\"file-link\" href=\"" + escapeHtml(row.url) +
-          "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(row.name) + "</a></td>" +
-          "<td>" + escapeHtml(row.mop) + "</td>" +
-          "<td>" + escapeHtml(row.rfm) + "</td>" +
-          "<td>" + badge(row) + "</td>" +
-          "<td>" + escapeHtml(row.last_kind || "—") +
-          (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</td>" +
-          "<td class=\"cov-subject\" title=\"" + escapeHtml(subject) + "\">" + escapeHtml(short) + "</td>" +
-          "<td><button type=\"button\" class=\"cov-events-btn\" data-i=\"" + i + "\">" + n + " →</button></td>" +
-          "<td>" + (row.has_planned ? "да" : "") + "</td>" +
-          "<td>" + (row.has_overdue ? "да" : "") + "</td>" +
-          "<td>" + (row.has_deal ? "да" : "") + "</td>" +
-          "<td class=\"cov-links\">" + linkList(row.deal_links) + "</td>" +
-          "<td>" + (row.has_sp ? "да" : "") + "</td>" +
-          "<td class=\"cov-links\">" + linkList(row.sp_links) + "</td></tr>";
-      }).join("") +
-      "</tbody></table></div>";
+      "</tr></thead><tbody>" + bodyHtml + "</tbody></table></div>";
     table.querySelectorAll("th[data-sort]").forEach(function (th) {
-      th.addEventListener("click", function () {
+      th.addEventListener("click", function (e) {
+        if (e.target.closest && (e.target.closest(".cov-th-filter") || e.target.closest(".cov-col-resize"))) return;
         const key = th.getAttribute("data-sort") === "coverage_title" ? "coverage" : th.getAttribute("data-sort");
         if (STATE.sortKey === key) STATE.sortDir *= -1;
         else {
@@ -421,6 +625,19 @@
         paintTable();
       });
     });
+    table.querySelectorAll(".cov-th-filter").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const key = btn.getAttribute("data-filter");
+        if (STATE.openFilter === key) {
+          closeColFilter();
+          return;
+        }
+        openColFilter(key, btn);
+      });
+    });
+    bindColResize(table);
     const tbody = table.querySelector("tbody");
     if (tbody) {
       tbody.addEventListener("click", function (e) {
@@ -449,6 +666,8 @@
     STATE.selected = null;
     STATE.covFilter = "all";
     STATE.search = "";
+    STATE.colFilters = {};
+    closeColFilter();
     const search = $("cov-search");
     if (search) search.value = "";
     syncChips();
@@ -501,6 +720,23 @@
         paintTable();
       });
     }
+    const clearCols = $("cov-clear-col-filters");
+    if (clearCols) {
+      clearCols.addEventListener("click", function () {
+        STATE.colFilters = {};
+        closeColFilter();
+        paintTable();
+      });
+    }
+    document.addEventListener("click", function (e) {
+      const pop = $("cov-col-filter-pop");
+      if (!pop || pop.hidden) return;
+      if (e.target.closest && (e.target.closest("#cov-col-filter-pop") || e.target.closest(".cov-th-filter"))) return;
+      closeColFilter();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeColFilter();
+    });
     must("cov-btn").addEventListener("click", async function () {
       const btn = must("cov-btn");
       btn.disabled = true;

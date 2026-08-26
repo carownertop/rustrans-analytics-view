@@ -723,9 +723,118 @@ table.flat tbody tr:nth-child(even) td:first-child { background: #fff; }
   color: #fff;
 }
 .cov-wrap { max-height: 560px; }
+.cov-wrap table.flat.cov-grid {
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+}
+.cov-wrap table.flat.cov-grid th {
+  position: relative;
+  padding: 8px 18px 8px 10px;
+  vertical-align: middle;
+}
+.cov-th-main {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.cov-th-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cov-th-filter {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #c5d4e6;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 3px;
+  border-radius: 4px;
+}
+.cov-th-filter:hover,
+.cov-th-filter.on {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+}
+.cov-col-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 4;
+}
+.cov-col-resize:hover,
+body.cov-resizing .cov-col-resize {
+  background: rgba(255,255,255,.35);
+}
+body.cov-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+.cov-col-filter-pop {
+  position: fixed;
+  z-index: 90;
+  width: 280px;
+  max-height: 340px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(15, 35, 60, .18);
+  padding: 10px;
+}
+.cov-col-filter-pop[hidden] { display: none !important; }
+.cov-col-filter-head {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.cov-col-filter-q {
+  width: 100%;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.cov-col-filter-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.cov-col-filter-actions button {
+  font-size: 11px;
+  padding: 6px 8px;
+  width: auto;
+}
+.cov-col-filter-list {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cov-col-filter-list label {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.cov-col-filter-list label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .cov-wrap table.flat td.cov-links {
   white-space: normal;
-  max-width: 220px;
+  max-width: none;
   line-height: 1.35;
 }
 .cov-wrap table.flat td.cov-links .file-link {
