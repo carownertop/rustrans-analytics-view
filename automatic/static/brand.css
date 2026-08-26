@@ -759,12 +759,46 @@ table.flat tbody tr:nth-child(even) td:first-child { background: #fff; }
   font-size: 15px;
   font-weight: 800;
 }
+.cov-events-title {
+  margin: 14px 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cov-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 4px;
+}
+.cov-event {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}
+.cov-event-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cov-event-title {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
 .cov-detail-panel .cov-quote {
   font-size: 12px;
   font-weight: 500;
   color: var(--muted);
   white-space: pre-wrap;
-  margin: 8px 0 0;
+  margin: 6px 0 0;
 }
 .cov-detail-meta {
   display: flex;

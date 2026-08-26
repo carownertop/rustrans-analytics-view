@@ -19,6 +19,7 @@
     { key: "rfm", title: "RFM" },
     { key: "coverage_title", title: "Проработка" },
     { key: "last_kind", title: "Последнее" },
+    { key: "events_count", title: "События" },
     { key: "has_deal", title: "Сделка" },
     { key: "deal_links", title: "Открытые сделки" },
     { key: "has_sp", title: "СП" },
@@ -180,6 +181,7 @@
     }
     if (key === "has_deal" || key === "has_sp") return row[key] ? 1 : 0;
     if (key === "deal_links" || key === "sp_links") return (row[key] || []).length;
+    if (key === "events_count") return row.events_count || (row.events || []).length || 0;
     if (key === "last_kind") return ((row.last_kind || "") + " " + (row.last_at || "")).toLowerCase();
     return String(row[key] == null ? "" : row[key]).toLowerCase();
   }
@@ -251,6 +253,22 @@
       panel.innerHTML = "";
       return;
     }
+    const events = row.events || [];
+    const timeline = events.length
+      ? "<div class=\"cov-timeline\">" + events.map(function (ev) {
+          const head = escapeHtml(ev.label || ev.kind || "Событие") +
+            (ev.at ? " · " + escapeHtml(ev.at) : "");
+          const title = ev.url
+            ? "<a class=\"file-link\" href=\"" + escapeHtml(ev.url) +
+              "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(ev.subject || "Без темы") + "</a>"
+            : escapeHtml(ev.subject || "Без темы");
+          const body = ev.text
+            ? "<div class=\"cov-quote\">" + escapeHtml(ev.text) + "</div>"
+            : "<p class=\"hint\" style=\"margin:4px 0 0\">Без описания</p>";
+          return "<div class=\"cov-event\"><div class=\"cov-event-head\">" + head +
+            "</div><div class=\"cov-event-title\">" + title + "</div>" + body + "</div>";
+        }).join("") + "</div>"
+      : "<p class=\"hint\" style=\"margin:8px 0 0\">В периоде нет дел/звонков/писем по этой карточке</p>";
     panel.hidden = false;
     panel.innerHTML =
       "<h3><a class=\"file-link\" href=\"" + escapeHtml(row.url) +
@@ -261,7 +279,8 @@
       "<span>RFM: " + escapeHtml(row.rfm) + "</span>" +
       "<span>" + escapeHtml(row.last_kind || "Нет касания") +
       (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</span>" +
-      "<span>Касаний: " + (row.touches || 0) + " · Писем: " + (row.emails || 0) + "</span>" +
+      "<span>Касаний: " + (row.touches || 0) + " · Писем: " + (row.emails || 0) +
+      " · Событий: " + (row.events_count || events.length) + "</span>" +
       "<span>Сделка: " + (row.has_deal ? "да" : "нет") + " · СП: " +
       (row.has_sp ? "да" : "нет") + "</span></div>" +
       ((row.deal_links && row.deal_links.length)
@@ -272,17 +291,14 @@
         ? "<div class=\"cov-detail-meta\" style=\"margin-top:8px\"><span>Открытые СП:</span> " +
           linkList(row.sp_links) + "</div>"
         : "") +
-      (row.last_text || row.last_subject
-        ? "<div class=\"cov-quote\">" + escapeHtml(row.last_subject || "") +
-          (row.last_text ? "<br>" + escapeHtml(row.last_text) : "") + "</div>"
-        : "<p class=\"hint\" style=\"margin:8px 0 0\">Нет текста последней активности</p>");
+      "<h4 class=\"cov-events-title\">События за период</h4>" + timeline;
   }
   function paintTable() {
     STATE.view = visibleRows();
     const meta = $("cov-view-meta");
     if (meta) {
       meta.textContent = "На экране " + STATE.view.length + " из " + STATE.rows.length +
-        ". «Сформировать файл» — Excel видимой таблицы во вкладку Готовые.";
+        ". Клик по строке — все события периода с текстом и ссылками. «Сформировать файл» — Excel видимой таблицы.";
     }
     const table = $("cov-table");
     if (!table) return;
@@ -311,6 +327,7 @@
           "<td>" + badge(row) + "</td>" +
           "<td>" + escapeHtml(row.last_kind || "—") +
           (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</td>" +
+          "<td>" + (row.events_count || (row.events || []).length || 0) + "</td>" +
           "<td>" + (row.has_deal ? "да" : "") + "</td>" +
           "<td class=\"cov-links\">" + linkList(row.deal_links) + "</td>" +
           "<td>" + (row.has_sp ? "да" : "") + "</td>" +
