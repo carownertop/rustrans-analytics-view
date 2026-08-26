@@ -185,7 +185,7 @@
       <h1>Загрузка 1С</h1>
       <span class="pill">xlsx</span>
     </div>
-    <p class="sub">Войдите паролем, затем киньте одну или несколько выгрузок — тип (реализации / оплаты) определится сам.</p>
+    <p class="sub">Войдите паролем, выберите тип (реализации или оплаты) и загрузите один файл .xlsx.</p>
 
     <div class="card" id="gate">
       <label class="field" for="password">Пароль</label>
@@ -197,31 +197,21 @@
 
     <div id="app">
       <div class="card">
-        <label class="field">Файлы</label>
-        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Выбрать файлы">
+        <label class="field" for="kind">Тип файла</label>
+        <select id="kind" name="kind">
+          <option value="" selected disabled>Выберите…</option>
+          <option value="realizations">Реализации</option>
+          <option value="payments">Оплаты</option>
+        </select>
+        <p class="adv-note" style="margin:0 0 14px">Тип указываете вы. Один файл за раз — так оплаты не перепутаются с реализациями.</p>
+
+        <label class="field">Файл</label>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Выбрать файл">
           <strong>Перетащите XLSX сюда</strong>
-          <span>можно несколько · или нажмите, чтобы выбрать · до 25 МБ каждый</span>
-          <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple hidden />
+          <span>один файл · или нажмите, чтобы выбрать · до 25 МБ</span>
+          <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden />
         </div>
         <ul class="flist" id="flist" aria-live="polite"></ul>
-
-        <div class="adv" id="adv">
-          <button type="button" class="adv-toggle" id="advToggle" aria-expanded="false">
-            <span class="chev">›</span>
-            <span>Ручной тип · если авто не сработал</span>
-          </button>
-          <div class="adv-body">
-            <div>
-              <p class="adv-note">По умолчанию тип определяется по содержимому. Ручной режим — только если нужно принудительно указать тип для всей пачки.</p>
-              <label class="field" for="kind">Тип для всей пачки</label>
-              <select id="kind" name="kind">
-                <option value="auto" selected>Авто (рекомендуется)</option>
-                <option value="realizations">Принудительно: реализации</option>
-                <option value="payments">Принудительно: оплаты</option>
-              </select>
-            </div>
-          </div>
-        </div>
 
         <button type="button" class="primary" id="send" style="margin-top:14px">Загрузить и разобрать</button>
         <div class="progress" id="progress" aria-live="polite">
@@ -231,7 +221,7 @@
         <div class="msg" id="msg" role="status"></div>
       </div>
       <div class="card hint">
-        Форма на GitHub Pages шлёт файлы на VPS (<code>/u</code>). Неизвестный файл отклоняется с ошибкой ниже и во всплывающем уведомлении.
+        Форма на GitHub Pages шлёт файл на VPS (<code>/u</code>). Сначала тип, потом один .xlsx.
       </div>
     </div>
   </div>
@@ -239,7 +229,7 @@
   <div class="toast" id="toast" role="alert"></div>
 
   <script>
-    const BLOBS = [{"salt": "lfojNm9OWpMET7rmCwd5kw==", "iv": "NiTgjQPZNKhElr7a", "data": "W2W1TbQh7bAyvxQEjJO8KVpVdBvzVtEM7SSxEqh1q5LlZ5FWGxo3gGKJFK5A9938v1ma0MjI97gFH2Y1RW89qy6LuavuSPszY03sOwhKGHxk", "cookie": "rtl_manage_pw"}, {"salt": "38iL+BEafr6lXuS/jK1NMQ==", "iv": "PxZgXUEuLe9Trolq", "data": "m2dXX10zMCWrGEsvatiVPljDgqyzYOO9l2ZP1+h93WsS0Q/7WyZR2bqnsxDSaTNgowb+/eyreviCTuKMlD75BogJd8UHt0A/TsnGR2gXj9Q2", "cookie": "rtl_hub_pw"}];
+    const BLOBS = [{"salt": "lpvF+SoHuLViiAu1V3sQAg==", "iv": "QsK7BwwbNdJx7s9C", "data": "rmnVqLZdg5AQSCiyUfq5PoB07mwnOhJF1nAETDc8rUqKAZtJTMKFJukLjoVc5MiV9foJia6mTxs8TYs3A3YcM9P4qWr2YUgLZzLC4RXa06+E", "cookie": "rtl_manage_pw"}, {"salt": "akA5ZUfZVQoMeq8XDOd2xQ==", "iv": "9BajmDA95TE3U7p6", "data": "WXeUpr0rcqof6d3mlW+nxFQNH8X3iHSoGLjESrdIc9o960EzHlY9rU6/T6pUZGKJB0+ltiOeUKIrtBm7QAxaFzPBIDUlmmHwrTJkKajnIDDW", "cookie": "rtl_hub_pw"}];
     const ITERATIONS = 50000;
     let CFG = null;
     let PASS = "";
@@ -376,11 +366,9 @@
     const drop = document.getElementById("drop");
     const fileInput = document.getElementById("file");
     const flist = document.getElementById("flist");
-    const adv = document.getElementById("adv");
-    const advToggle = document.getElementById("advToggle");
     const kindSel = document.getElementById("kind");
-    /** @type {File[]} */
-    let chosen = [];
+    /** @type {File|null} */
+    let chosen = null;
 
     function fmtSize(n) {
       if (n < 1024) return n + " Б";
@@ -391,47 +379,44 @@
       return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
     }
     function renderList() {
-      drop.classList.toggle("has-files", chosen.length > 0);
-      flist.innerHTML = chosen.map((f, i) => `
+      drop.classList.toggle("has-files", !!chosen);
+      if (!chosen) { flist.innerHTML = ""; return; }
+      flist.innerHTML = `
         <li>
           <div class="meta">
-            <div class="nm">${escapeHtml(f.name)}</div>
-            <div class="sz">${fmtSize(f.size)}</div>
+            <div class="nm">${escapeHtml(chosen.name)}</div>
+            <div class="sz">${fmtSize(chosen.size)}</div>
           </div>
-          <button type="button" class="rm" data-i="${i}" aria-label="Убрать">убрать</button>
-        </li>`).join("");
+          <button type="button" class="rm" aria-label="Убрать">убрать</button>
+        </li>`;
     }
-    function addFiles(fileList) {
-      const arr = Array.from(fileList || []);
-      for (const f of arr) {
-        const low = (f.name || "").toLowerCase();
-        if (!low.endsWith(".xlsx") && !low.endsWith(".xls")) continue;
-        if (chosen.some(x => x.name === f.name && x.size === f.size && x.lastModified === f.lastModified)) continue;
-        chosen.push(f);
-      }
+    function setFile(f) {
+      if (!f) { chosen = null; renderList(); return; }
+      const low = (f.name || "").toLowerCase();
+      if (!low.endsWith(".xlsx") && !low.endsWith(".xls")) return;
+      chosen = f;
       renderList();
     }
 
     flist.addEventListener("click", e => {
-      const t = e.target.closest(".rm");
-      if (!t) return;
-      chosen.splice(+t.dataset.i, 1);
+      if (!e.target.closest(".rm")) return;
+      chosen = null;
       renderList();
     });
     drop.addEventListener("click", () => fileInput.click());
     drop.addEventListener("keydown", e => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
     });
-    fileInput.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
+    fileInput.addEventListener("change", () => {
+      setFile(fileInput.files && fileInput.files[0]);
+      fileInput.value = "";
+    });
     drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("drag"); });
     drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
     drop.addEventListener("drop", e => {
       e.preventDefault(); drop.classList.remove("drag");
-      addFiles(e.dataTransfer.files);
-    });
-    advToggle.addEventListener("click", () => {
-      const open = adv.classList.toggle("open");
-      advToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) setFile(f);
     });
 
     document.getElementById("send").onclick = async () => {
@@ -442,10 +427,11 @@
       const progressPct = document.getElementById("progressPct");
       msg.className = "msg";
       if (!CFG) { show(msg, "Сначала введите пароль", "err"); showToast("Нужен вход", "err"); return; }
-      if (!chosen.length) { show(msg, "Выберите хотя бы один файл .xlsx", "err"); showToast("Нет файлов", "err"); return; }
+      if (!kindSel.value) { show(msg, "Выберите тип: реализации или оплаты", "err"); showToast("Нужен тип", "err"); return; }
+      if (!chosen) { show(msg, "Выберите один файл .xlsx", "err"); showToast("Нет файла", "err"); return; }
       const btn = document.getElementById("send");
       btn.disabled = true;
-      btn.textContent = chosen.length > 1 ? ("Отправка " + chosen.length + "…") : "Отправка…";
+      btn.textContent = "Отправка…";
 
       let pollTimer = null;
       const stopPoll = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
@@ -458,7 +444,7 @@
         if (label) progressLabel.textContent = label;
       };
       const statusUrl = CFG.api.replace(/\/$/, "") + "/api/upload/status";
-      setProgress(4, "Отправка файлов на сервер…", true);
+      setProgress(4, "Отправка файла на сервер…", true);
       pollTimer = setInterval(async () => {
         try {
           const sr = await fetch(statusUrl, { cache: "no-store" });
@@ -470,22 +456,19 @@
       }, 700);
 
       try {
-        for (const f of chosen) {
-          if (f.size > 25 * 1024 * 1024) throw new Error("«" + f.name + "» больше 25 МБ");
-        }
+        if (chosen.size > 25 * 1024 * 1024) throw new Error("Файл больше 25 МБ");
         const fd = new FormData();
         fd.append("password", PASS);
-        fd.append("kind", kindSel.value || "auto");
-        for (const f of chosen) fd.append("files", f, f.name);
+        fd.append("kind", kindSel.value);
+        fd.append("file", chosen, chosen.name);
         const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/upload", { method: "POST", body: fd });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
         setProgress(100, "Готово", false);
         const summary = j.summary || (("Готово: " + (j.path || "")) + (j.hint ? ("\n" + j.hint) : ""));
-        const type = j.partial ? "warn" : "ok";
-        show(msg, summary, type);
-        showToast(j.partial ? "Часть файлов с ошибкой" : "Загрузка успешна", j.partial ? "err" : "ok");
-        chosen = [];
+        show(msg, summary, "ok");
+        showToast("Загрузка успешна", "ok");
+        chosen = null;
         renderList();
       } catch (e) {
         const m = String(e.message || e);
