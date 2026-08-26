@@ -29,7 +29,7 @@ button, input, select { font: inherit; }
 .head {
   background: var(--navy);
   color: #fff;
-  padding: 20px 0 14px;
+  padding: 12px 0 10px;
 }
 .head-inner {
   width: min(1120px, calc(100% - 40px));
@@ -38,9 +38,9 @@ button, input, select { font: inherit; }
 .head-top {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   align-items: flex-start;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 .brand {
   display: flex;
@@ -50,8 +50,8 @@ button, input, select { font: inherit; }
 }
 .brand-mark {
   flex: 0 0 auto;
-  height: 72px;
-  width: min(316px, 72vw);
+  height: 52px;
+  width: min(240px, 58vw);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -75,7 +75,7 @@ button, input, select { font: inherit; }
 }
 .brand h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: -.03em;
   color: #fff;
@@ -90,8 +90,8 @@ button, input, select { font: inherit; }
 .nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 .nav-pill {
   appearance: none;
@@ -99,8 +99,8 @@ button, input, select { font: inherit; }
   background: transparent;
   color: rgba(255,255,255,.82);
   border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 5px 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -133,31 +133,36 @@ button, input, select { font: inherit; }
 
 .sheet {
   background: #fff;
-  min-height: calc(100vh - 180px);
-  padding: 28px 0 56px;
+  min-height: calc(100vh - 140px);
+  padding: 16px 0 40px;
 }
 .sheet-inner {
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
 }
 .sheet h2 {
-  margin: 0 0 6px;
-  font-size: 28px;
+  margin: 0 0 4px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -.03em;
 }
 .lead {
-  margin: 0 0 16px;
+  margin: 0 0 10px;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
-  max-width: 78ch;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 72ch;
 }
 .subnav {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 22px;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.subnav-tight { margin-bottom: 10px; }
+.subnav-inline {
+  margin: 0;
+  gap: 5px;
 }
 .sub-pill {
   appearance: none;
@@ -165,8 +170,8 @@ button, input, select { font: inherit; }
   background: #fff;
   color: var(--navy);
   border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 5px 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -232,7 +237,84 @@ label.check:has(input:checked) {
   border-color: #aeb9c8;
   background: #fff;
 }
+.mops-dense {
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 5px;
+  margin-bottom: 4px;
+}
+.mops-dense label {
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+  gap: 6px;
+}
+.mops-dense .meta { font-size: 11px; }
 .mops .meta { font-weight: 500; }
+label.check-compact {
+  padding: 7px 10px;
+  font-size: 13px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+}
+.filters-compact {
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+  max-width: none;
+}
+.build-toolbar {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+  max-width: 900px;
+}
+.build-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: flex-end;
+}
+.build-field { min-width: 0; }
+.build-field-grow {
+  flex: 1 1 180px;
+  max-width: 320px;
+}
+.build-field-grow select { max-width: none; }
+#build .field-label,
+#ready .field-label {
+  margin-bottom: 3px;
+  font-size: 10px;
+}
+#build input[type=date],
+#build select,
+#ready input[type=date],
+#ready select {
+  padding: 7px 10px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+#build button.primary,
+#build-coverage #cov-btn {
+  width: auto;
+  min-width: 180px;
+  max-width: 100%;
+  padding: 9px 16px;
+  font-size: 13px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+#build .adv { margin-top: 6px; max-width: none; }
+#build .adv-note {
+  margin: 4px 0 6px;
+  font-size: 10px;
+}
+#build .cov-field-dense { margin: 6px 0 4px; }
+#build .cov-field-dense .cov-field-head { margin-bottom: 2px; }
+#build .cov-mini {
+  padding: 2px 7px;
+  font-size: 10px;
+}
+#build .msg { margin-top: 8px; padding: 8px 10px; font-size: 12px; }
 input[type=date],
 select {
   width: 100%;

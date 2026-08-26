@@ -8,7 +8,7 @@
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <meta http-equiv="Cache-Control" content="no-cache" />
-  <link rel="stylesheet" href="static/brand.css?v=mark4" />
+  <link rel="stylesheet" href="static/brand.css?v=mark5" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub4"></script>
   <script src="static/coverage.js?v=16"></script>
@@ -21,7 +21,7 @@
           <div class="brand-mark"><img src="static/logo.png" alt="Rustrans-Logistic.ru" /></div>
           <div>
             <h1>Сбор автоматических отчётов</h1>
-            <p class="caption">Сервис, который помогает собирать автоматизированные отчёты и сводки.</p>
+            <p class="caption">Автоматические отчёты и сводки.</p>
           </div>
         </div>
       </div>
@@ -40,8 +40,8 @@
     <div class="sheet-inner">
       <section class="panel on" id="build">
         <h2 id="build-title">План продаж</h2>
-        <p class="lead" id="build-lead">Кому звонить и что предложить со склада. Считается от текущего наличия товаров на складе и выбирает клиентов, которые исторически уже покупали этот товар. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.</p>
-        <nav class="subnav" id="build-tabs">
+        <p class="lead" id="build-lead">Кому звонить и что предложить со склада. Пустой список МОПов — сбор по всей команде.</p>
+        <nav class="subnav subnav-tight" id="build-tabs">
           <button type="button" class="sub-pill on" data-build="plan">План продаж</button>
           <button type="button" class="sub-pill" data-build="segmentation">Сегментация</button>
           <button type="button" class="sub-pill" data-build="coverage">Проработка</button>
@@ -49,8 +49,7 @@
 
         <div class="subpanel on" id="build-plan">
           <span class="field-label">МОПы</span>
-          <p class="hint" style="margin:0 0 10px">Если ничего не отмечено — соберём всем, кто есть в реализациях.</p>
-          <div class="mops" id="mops"></div>
+          <div class="mops mops-dense" id="mops"></div>
           <div class="adv" id="adv-plan">
             <button type="button" class="adv-toggle" data-adv="adv-plan" aria-expanded="false">
               <span class="chev">›</span> Дополнительно
@@ -68,10 +67,9 @@
         </div>
 
         <div class="subpanel" id="build-segmentation">
-          <label class="check"><input type="checkbox" id="seg-company" checked /> Вся компания — сводка и динамика миграции</label>
+          <label class="check check-compact"><input type="checkbox" id="seg-company" checked /> Вся компания — сводка и динамика</label>
           <span class="field-label">МОПы</span>
-          <p class="hint" style="margin:0 0 10px">Сводка и файлы менеджеров собираются независимо. Можно только компания, только МОПы или оба.</p>
-          <div class="mops" id="seg-mops"></div>
+          <div class="mops mops-dense" id="seg-mops"></div>
           <div class="adv" id="adv-seg">
             <button type="button" class="adv-toggle" data-adv="adv-seg" aria-expanded="false">
               <span class="chev">›</span> Дополнительно
@@ -89,33 +87,40 @@
         </div>
 
         <div class="subpanel" id="build-coverage">
-          <p class="hint" style="margin:0 0 12px">Один отчёт: срез карточек и касания за период. Автодела не входят. Письмо — отдельная метка. Сделка и СП — рядом, не вместо звонка.</p>
-          <span class="field-label">Вселенная</span>
-          <nav class="subnav" id="cov-universe">
-            <button type="button" class="sub-pill on" data-universe="company">Компании</button>
-            <button type="button" class="sub-pill" data-universe="lead">Лиды</button>
-            <button type="button" class="sub-pill" data-universe="contact">Контакты</button>
-          </nav>
-          <label class="field-label" for="cov-preset">Пресет</label>
-          <select id="cov-preset"></select>
-          <div class="filters" style="margin-top:12px">
-            <div>
-              <label class="field-label" for="cov-period-from">Период анализа с</label>
-              <input id="cov-period-from" type="date" />
+          <div class="build-toolbar">
+            <div class="build-toolbar-row">
+              <div class="build-field">
+                <span class="field-label">Вселенная</span>
+                <nav class="subnav subnav-inline" id="cov-universe">
+                  <button type="button" class="sub-pill on" data-universe="company">Компании</button>
+                  <button type="button" class="sub-pill" data-universe="lead">Лиды</button>
+                  <button type="button" class="sub-pill" data-universe="contact">Контакты</button>
+                </nav>
+              </div>
+              <div class="build-field build-field-grow">
+                <label class="field-label" for="cov-preset">Пресет</label>
+                <select id="cov-preset"></select>
+              </div>
             </div>
-            <div>
-              <label class="field-label" for="cov-period-to">по</label>
-              <input id="cov-period-to" type="date" />
+            <div class="filters filters-compact">
+              <div>
+                <label class="field-label" for="cov-period-from">Период с</label>
+                <input id="cov-period-from" type="date" />
+              </div>
+              <div>
+                <label class="field-label" for="cov-period-to">по</label>
+                <input id="cov-period-to" type="date" />
+              </div>
             </div>
           </div>
-          <div class="adv open" id="adv-cov">
-            <button type="button" class="adv-toggle" data-adv="adv-cov" aria-expanded="true">
+          <div class="adv" id="adv-cov">
+            <button type="button" class="adv-toggle" data-adv="adv-cov" aria-expanded="false">
               <span class="chev">›</span> Поля среза
             </button>
             <div class="adv-body">
               <div>
-                <p class="adv-note">По умолчанию все значения включены. В каждом блоке — «Все» / «Сбросить». «Созданы» пустые = любые даты.</p>
-                <div class="filters">
+                <p class="adv-note">Пустые «Созданы» = любые даты. В блоках — «Все» / «Сбросить».</p>
+                <div class="filters filters-compact">
                   <div>
                     <label class="field-label" for="cov-created-from">Созданы с</label>
                     <input id="cov-created-from" type="date" />
@@ -126,7 +131,7 @@
                   </div>
                 </div>
 
-                <div class="cov-field">
+                <div class="cov-field cov-field-dense">
                   <div class="cov-field-head">
                     <span class="field-label" id="cov-card-mop-label">Ответственный за компанию</span>
                     <div class="cov-field-actions">
@@ -134,11 +139,10 @@
                       <button type="button" class="cov-mini" data-check="cov-company-mop" data-on="0">Сбросить</button>
                     </div>
                   </div>
-                  <p class="hint" id="cov-card-mop-hint" style="margin:0 0 8px">МОПы из команды — кого берём в срез карточек.</p>
-                  <div class="mops" id="cov-mops-company"></div>
+                  <div class="mops mops-dense" id="cov-mops-company"></div>
                 </div>
 
-                <div class="cov-field">
+                <div class="cov-field cov-field-dense">
                   <div class="cov-field-head">
                     <span class="field-label" id="cov-other-mop-label">Остальные сотрудники</span>
                     <div class="cov-field-actions">
@@ -146,11 +150,10 @@
                       <button type="button" class="cov-mini" data-check="cov-other-mop" data-on="0">Сбросить</button>
                     </div>
                   </div>
-                  <p class="hint" style="margin:0 0 8px">Ответственные карточек вне списка МОПов (админы, другие роли).</p>
-                  <div class="mops" id="cov-mops-other"></div>
+                  <div class="mops mops-dense" id="cov-mops-other"></div>
                 </div>
 
-                <div class="cov-field">
+                <div class="cov-field cov-field-dense">
                   <div class="cov-field-head">
                     <span class="field-label">Ответственный за дела</span>
                     <div class="cov-field-actions">
@@ -158,11 +161,10 @@
                       <button type="button" class="cov-mini" data-check="cov-activity-mop" data-on="0">Сбросить</button>
                     </div>
                   </div>
-                  <p class="hint" style="margin:0 0 8px">Чьи звонки / дела / письма считаем в периоде (RESPONSIBLE у активности).</p>
-                  <div class="mops" id="cov-mops-activity"></div>
+                  <div class="mops mops-dense" id="cov-mops-activity"></div>
                 </div>
 
-                <div class="cov-field">
+                <div class="cov-field cov-field-dense">
                   <div class="cov-field-head">
                     <span class="field-label">Запланированные дела</span>
                     <div class="cov-field-actions">
@@ -170,12 +172,11 @@
                       <button type="button" class="cov-mini" data-check="cov-planned" data-on="0">Сбросить</button>
                     </div>
                   </div>
-                  <p class="hint" style="margin:0 0 8px">По незавершённым делам на карточке сейчас (не только в периоде анализа). Можно отметить несколько — карточка подойдёт, если совпало хотя бы одно.</p>
-                  <div class="mops" id="cov-planned"></div>
+                  <div class="mops mops-dense" id="cov-planned"></div>
                 </div>
 
                 <div id="cov-company-fields">
-                  <div class="cov-field">
+                  <div class="cov-field cov-field-dense">
                     <div class="cov-field-head">
                       <span class="field-label">RFM</span>
                       <div class="cov-field-actions">
@@ -183,9 +184,9 @@
                         <button type="button" class="cov-mini" data-check="cov-rfm" data-on="0">Сбросить</button>
                       </div>
                     </div>
-                    <div class="mops" id="cov-rfm"></div>
+                    <div class="mops mops-dense" id="cov-rfm"></div>
                   </div>
-                  <div class="cov-field">
+                  <div class="cov-field cov-field-dense">
                     <div class="cov-field-head">
                       <span class="field-label">Статус работы с клиентом</span>
                       <div class="cov-field-actions">
@@ -193,9 +194,9 @@
                         <button type="button" class="cov-mini" data-check="cov-work" data-on="0">Сбросить</button>
                       </div>
                     </div>
-                    <div class="mops" id="cov-work"></div>
+                    <div class="mops mops-dense" id="cov-work"></div>
                   </div>
-                  <div class="cov-field">
+                  <div class="cov-field cov-field-dense">
                     <div class="cov-field-head">
                       <span class="field-label">Тип клиента</span>
                       <div class="cov-field-actions">
@@ -203,9 +204,9 @@
                         <button type="button" class="cov-mini" data-check="cov-type" data-on="0">Сбросить</button>
                       </div>
                     </div>
-                    <div class="mops" id="cov-type"></div>
+                    <div class="mops mops-dense" id="cov-type"></div>
                   </div>
-                  <div class="cov-field">
+                  <div class="cov-field cov-field-dense">
                     <div class="cov-field-head">
                       <span class="field-label">Направление</span>
                       <div class="cov-field-actions">
@@ -213,11 +214,11 @@
                         <button type="button" class="cov-mini" data-check="cov-dir" data-on="0">Сбросить</button>
                       </div>
                     </div>
-                    <div class="mops" id="cov-dir"></div>
+                    <div class="mops mops-dense" id="cov-dir"></div>
                   </div>
                 </div>
                 <div id="cov-lead-fields" hidden>
-                  <div class="cov-field">
+                  <div class="cov-field cov-field-dense">
                     <div class="cov-field-head">
                       <span class="field-label">Статус лида</span>
                       <div class="cov-field-actions">
@@ -225,7 +226,7 @@
                         <button type="button" class="cov-mini" data-check="cov-lead-sem" data-on="0">Сбросить</button>
                       </div>
                     </div>
-                    <div class="mops" id="cov-lead-sem"></div>
+                    <div class="mops mops-dense" id="cov-lead-sem"></div>
                   </div>
                 </div>
               </div>
@@ -259,13 +260,13 @@
       <section class="panel" id="ready">
         <h2 id="ready-title">План продаж</h2>
         <p class="lead" id="ready-lead">Скачайте Excel. Фильтры только внутри этого отчёта.</p>
-        <nav class="subnav" id="ready-tabs">
+        <nav class="subnav subnav-tight" id="ready-tabs">
           <button type="button" class="sub-pill on" data-ready="plan">План продаж<span class="n" data-count="plan"></span></button>
           <button type="button" class="sub-pill" data-ready="segmentation">Сегментация<span class="n" data-count="segmentation"></span></button>
           <button type="button" class="sub-pill" data-ready="dynamics">Динамика<span class="n" data-count="dynamics"></span></button>
           <button type="button" class="sub-pill" data-ready="coverage">Проработка<span class="n" data-count="coverage"></span></button>
         </nav>
-        <div class="filters">
+        <div class="filters filters-compact">
           <div>
             <label class="field-label" for="flt-month">Месяц</label>
             <select id="flt-month"><option value="">Все</option></select>
@@ -289,15 +290,15 @@
     const BUILD_COPY = {
       plan: {
         title: "План продаж",
-        lead: "Кому звонить и что предложить со склада. Считается от текущего наличия товаров на складе и выбирает клиентов, которые исторически уже покупали этот товар. Отметьте МОПов — или снимите всех, чтобы собрать всей команде.",
+        lead: "Кому звонить и что предложить со склада. Пустой список МОПов — сбор по всей команде.",
       },
       segmentation: {
         title: "Сегментация",
-        lead: "Анализ базы в разрезе RFM, матрицы чек/частоты и жизненного цикла. Сводка по всей компании и/или файлы по отдельным МОПам. Динамика сегментов пишется только вместе со сводкой по всей компании.",
+        lead: "RFM и матрицы по компании и/или МОПам. Динамика — только со сводкой компании.",
       },
       coverage: {
         title: "Проработка",
-        lead: "Срез карточек и касания за выбранный период. Письмо отдельно. Сделка и СП — рядом.",
+        lead: "Срез карточек и касания за период. Поля среза — по кнопке ниже.",
       },
     };
     let allFiles = [];
