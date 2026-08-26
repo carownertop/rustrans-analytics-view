@@ -20,6 +20,7 @@
   const COLS = [
     { key: "name", title: "Карточка" },
     { key: "mop", title: "Отв. за компанию" },
+    { key: "contact_responsibles", title: "Отв. по контактам" },
     { key: "rfm", title: "RFM" },
     { key: "coverage_title", title: "Проработка" },
     { key: "event_types", title: "Тип" },
@@ -33,7 +34,7 @@
     { key: "sp_links", title: "Открытые СП" },
   ];
   const COL_DEFAULT_W = {
-    name: 220, mop: 140, rfm: 90, coverage_title: 120, event_types: 160,
+    name: 220, mop: 140, contact_responsibles: 160, rfm: 90, coverage_title: 120, event_types: 160,
     last_subject: 220, events_count: 64, has_planned: 64, has_overdue: 72,
     has_deal: 72, deal_links: 160, has_sp: 56, sp_links: 160,
   };
@@ -354,6 +355,10 @@
     }
     applyPreset(id);
   }
+  function contactMopColTitle(universe) {
+    if (universe === "contact") return "Отв. в делах";
+    return "Отв. по контактам";
+  }
   function cardMopCopy(universe) {
     if (universe === "lead") {
       return {
@@ -395,6 +400,8 @@
     updatePickerLabels();
     const mopCol = COLS.filter(function (c) { return c.key === "mop"; })[0];
     if (mopCol) mopCol.title = copy.col;
+    const contactCol = COLS.filter(function (c) { return c.key === "contact_responsibles"; })[0];
+    if (contactCol) contactCol.title = contactMopColTitle(STATE.universe);
     fillPresets();
   }
   function applyPreset(id) {
@@ -498,6 +505,7 @@
     if (key === "deal_links" || key === "sp_links") return (row[key] || []).length;
     if (key === "events_count") return row.events_count || (row.events || []).length || 0;
     if (key === "event_types") return String(row.event_types || row.last_kind || "").toLowerCase();
+    if (key === "contact_responsibles") return String(row.contact_responsibles || "").toLowerCase();
     return String(row[key] == null ? "" : row[key]).toLowerCase();
   }
   function cellFilterText(row, key) {
@@ -514,6 +522,9 @@
     }
     if (key === "event_types") {
       return String(row.event_types || row.last_kind || "—");
+    }
+    if (key === "contact_responsibles") {
+      return String(row.contact_responsibles || "—");
     }
     if (key === "last_subject") {
       return String(row.last_subject || row.last_text || "—");
@@ -539,7 +550,7 @@
         const eventBlob = (r.events || []).map(function (e) {
           return [e.label, e.subject, e.text, e.mop, e.author, e.duration, e.call_status, e.status, e.direction].join(" ");
         }).join(" ");
-        return [r.name, r.mop, r.rfm, r.work_status, r.client_type, r.direction,
+        return [r.name, r.mop, r.contact_responsibles, r.rfm, r.work_status, r.client_type, r.direction,
           r.coverage_title, r.event_types, r.last_kind, r.last_subject, r.last_text, eventBlob]
           .join(" ").toLowerCase().indexOf(q) >= 0;
       });
@@ -788,6 +799,8 @@
       "<div class=\"cov-detail-meta\">" +
       "<span>" + badge(row) + "</span>" +
       "<span>" + escapeHtml(cardMopCopy(row.universe || STATE.universe).detail) + ": " + escapeHtml(row.mop) + "</span>" +
+      "<span>" + escapeHtml(contactMopColTitle(row.universe || STATE.universe)) + ": " +
+      escapeHtml(row.contact_responsibles || "—") + "</span>" +
       "<span>RFM: " + escapeHtml(row.rfm) + "</span>" +
       "<span>Типы за период: " + escapeHtml(row.event_types || row.last_kind || "—") + "</span>" +
       "<span>Касаний: " + (row.touches || 0) + " · Писем: " + (row.emails || 0) +
@@ -849,6 +862,8 @@
             "<td style=\"" + colStyle("name") + "\"><a class=\"file-link\" href=\"" + escapeHtml(row.url) +
             "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(row.name) + "</a></td>" +
             "<td style=\"" + colStyle("mop") + "\">" + escapeHtml(row.mop) + "</td>" +
+            "<td style=\"" + colStyle("contact_responsibles") + "\">" +
+            escapeHtml(row.contact_responsibles || "—") + "</td>" +
             "<td style=\"" + colStyle("rfm") + "\">" + escapeHtml(row.rfm) + "</td>" +
             "<td style=\"" + colStyle("coverage_title") + "\">" + badge(row) + "</td>" +
             "<td style=\"" + colStyle("event_types") + "\">" + escapeHtml(row.event_types || "—") + "</td>" +
