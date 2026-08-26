@@ -15,11 +15,12 @@
 
   const COLS = [
     { key: "name", title: "Карточка" },
-    { key: "mop", title: "Ответственный" },
+    { key: "mop", title: "Отв. за компанию" },
     { key: "rfm", title: "RFM" },
     { key: "coverage_title", title: "Проработка" },
-    { key: "last_kind", title: "Последнее" },
-    { key: "events_count", title: "События" },
+    { key: "last_kind", title: "Тип" },
+    { key: "last_subject", title: "Тема / суть" },
+    { key: "events_count", title: "Дел" },
     { key: "has_deal", title: "Сделка" },
     { key: "deal_links", title: "Открытые сделки" },
     { key: "has_sp", title: "СП" },
@@ -115,7 +116,8 @@
   function applyPreset(id) {
     const enums = (STATE.meta && STATE.meta.enums) || {};
     if (!id) {
-      checkAll("cov-mop", true);
+      checkAll("cov-company-mop", true);
+      checkAll("cov-activity-mop", true);
       checkAll("cov-rfm", true);
       checkAll("cov-work", true);
       checkAll("cov-type", true);
@@ -125,7 +127,8 @@
     }
     if (id === "rfm_work") {
       setUniverse("company");
-      checkAll("cov-mop", true);
+      checkAll("cov-company-mop", true);
+      checkAll("cov-activity-mop", true);
       checkAll("cov-work", true);
       checkAll("cov-type", true);
       checkAll("cov-dir", true);
@@ -133,18 +136,21 @@
         .filter(function (x) { return x !== "8538" && x !== "9026"; }));
     } else if (id === "no_purchases") {
       setUniverse("company");
-      checkAll("cov-mop", true);
+      checkAll("cov-company-mop", true);
+      checkAll("cov-activity-mop", true);
       checkAll("cov-work", true);
       checkAll("cov-type", true);
       checkAll("cov-dir", true);
       setChecks("cov-rfm", ["9026"]);
     } else if (id === "leads_open") {
       setUniverse("lead");
-      checkAll("cov-mop", true);
+      checkAll("cov-company-mop", true);
+      checkAll("cov-activity-mop", true);
       setChecks("cov-lead-sem", ["P"]);
     } else if (id === "contacts_solo") {
       setUniverse("contact");
-      checkAll("cov-mop", true);
+      checkAll("cov-company-mop", true);
+      checkAll("cov-activity-mop", true);
     }
   }
   function payload() {
@@ -160,7 +166,8 @@
       client_type: selected("cov-type"),
       direction: selected("cov-dir"),
       lead_semantic: selected("cov-lead-sem"),
-      mop_ids: selected("cov-mop"),
+      mop_ids: selected("cov-company-mop"),
+      activity_mop_ids: selected("cov-activity-mop"),
     };
   }
   function badge(row) {
@@ -193,8 +200,11 @@
     }
     if (q) {
       rows = rows.filter(function (r) {
+        const eventBlob = (r.events || []).map(function (e) {
+          return [e.label, e.subject, e.text, e.mop].join(" ");
+        }).join(" ");
         return [r.name, r.mop, r.rfm, r.work_status, r.client_type, r.direction,
-          r.coverage_title, r.last_kind, r.last_subject]
+          r.coverage_title, r.last_kind, r.last_subject, r.last_text, eventBlob]
           .join(" ").toLowerCase().indexOf(q) >= 0;
       });
     }
@@ -249,38 +259,38 @@
     const panel = $("cov-detail");
     if (!panel) return;
     if (!row) {
-      panel.hidden = true;
-      panel.innerHTML = "";
+      panel.innerHTML = "<p class=\"hint\" style=\"margin:0\">Кликните строку в таблице ниже — здесь откроется полный список дел, звонков и описаний за период.</p>";
       return;
     }
     const events = row.events || [];
     const timeline = events.length
       ? "<div class=\"cov-timeline\">" + events.map(function (ev) {
           const head = escapeHtml(ev.label || ev.kind || "Событие") +
-            (ev.at ? " · " + escapeHtml(ev.at) : "");
+            (ev.at ? " · " + escapeHtml(ev.at) : "") +
+            (ev.mop ? " · " + escapeHtml(ev.mop) : "");
           const title = ev.url
             ? "<a class=\"file-link\" href=\"" + escapeHtml(ev.url) +
               "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(ev.subject || "Без темы") + "</a>"
             : escapeHtml(ev.subject || "Без темы");
           const body = ev.text
             ? "<div class=\"cov-quote\">" + escapeHtml(ev.text) + "</div>"
-            : "<p class=\"hint\" style=\"margin:4px 0 0\">Без описания</p>";
+            : "<p class=\"hint\" style=\"margin:4px 0 0\">Без описания в деле</p>";
           return "<div class=\"cov-event\"><div class=\"cov-event-head\">" + head +
             "</div><div class=\"cov-event-title\">" + title + "</div>" + body + "</div>";
         }).join("") + "</div>"
-      : "<p class=\"hint\" style=\"margin:8px 0 0\">В периоде нет дел/звонков/писем по этой карточке</p>";
-    panel.hidden = false;
+      : "<p class=\"hint\" style=\"margin:8px 0 0\">В периоде нет дел/звонков/писем и нет открытых сделок/СП</p>";
     panel.innerHTML =
+      "<div class=\"cov-detail-top\">" +
       "<h3><a class=\"file-link\" href=\"" + escapeHtml(row.url) +
       "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(row.name) + "</a></h3>" +
+      "<span class=\"cov-detail-count\">" + (row.events_count || events.length) + " событий</span></div>" +
       "<div class=\"cov-detail-meta\">" +
       "<span>" + badge(row) + "</span>" +
-      "<span>Ответственный: " + escapeHtml(row.mop) + "</span>" +
+      "<span>Отв. за компанию: " + escapeHtml(row.mop) + "</span>" +
       "<span>RFM: " + escapeHtml(row.rfm) + "</span>" +
       "<span>" + escapeHtml(row.last_kind || "Нет касания") +
       (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</span>" +
-      "<span>Касаний: " + (row.touches || 0) + " · Писем: " + (row.emails || 0) +
-      " · Событий: " + (row.events_count || events.length) + "</span>" +
+      "<span>Касаний: " + (row.touches || 0) + " · Писем: " + (row.emails || 0) + "</span>" +
       "<span>Сделка: " + (row.has_deal ? "да" : "нет") + " · СП: " +
       (row.has_sp ? "да" : "нет") + "</span></div>" +
       ((row.deal_links && row.deal_links.length)
@@ -291,20 +301,29 @@
         ? "<div class=\"cov-detail-meta\" style=\"margin-top:8px\"><span>Открытые СП:</span> " +
           linkList(row.sp_links) + "</div>"
         : "") +
-      "<h4 class=\"cov-events-title\">События за период</h4>" + timeline;
+      "<h4 class=\"cov-events-title\">Лента дел за период</h4>" + timeline;
+  }
+  function selectRow(row) {
+    STATE.selected = row || null;
+    paintTable();
+    paintDetail(STATE.selected);
+    const panel = $("cov-detail");
+    if (panel && STATE.selected) {
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }
   function paintTable() {
     STATE.view = visibleRows();
     const meta = $("cov-view-meta");
     if (meta) {
       meta.textContent = "На экране " + STATE.view.length + " из " + STATE.rows.length +
-        ". Клик по строке — все события периода с текстом и ссылками. «Сформировать файл» — Excel видимой таблицы.";
+        ". Лента дел — в блоке над таблицей (клик по строке). «Сформировать файл» — Excel видимого среза.";
     }
     const table = $("cov-table");
     if (!table) return;
     if (!STATE.view.length) {
       table.innerHTML = "<p class='empty'>Нет строк под текущий поиск и фильтр.</p>";
-      paintDetail(null);
+      if (!STATE.selected) paintDetail(null);
       return;
     }
     function arrow(key) {
@@ -319,6 +338,9 @@
       "</tr></thead><tbody>" +
       STATE.view.map(function (row, i) {
         const on = STATE.selected && STATE.selected.id === row.id ? " on" : "";
+        const subject = row.last_subject || row.last_text || "—";
+        const short = subject.length > 70 ? subject.slice(0, 69) + "…" : subject;
+        const n = row.events_count || (row.events || []).length || 0;
         return "<tr class=\"cov-row" + on + "\" data-i=\"" + i + "\">" +
           "<td><a class=\"file-link\" href=\"" + escapeHtml(row.url) +
           "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(row.name) + "</a></td>" +
@@ -327,7 +349,8 @@
           "<td>" + badge(row) + "</td>" +
           "<td>" + escapeHtml(row.last_kind || "—") +
           (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</td>" +
-          "<td>" + (row.events_count || (row.events || []).length || 0) + "</td>" +
+          "<td class=\"cov-subject\" title=\"" + escapeHtml(subject) + "\">" + escapeHtml(short) + "</td>" +
+          "<td><button type=\"button\" class=\"cov-events-btn\" data-i=\"" + i + "\">" + n + " →</button></td>" +
           "<td>" + (row.has_deal ? "да" : "") + "</td>" +
           "<td class=\"cov-links\">" + linkList(row.deal_links) + "</td>" +
           "<td>" + (row.has_sp ? "да" : "") + "</td>" +
@@ -349,17 +372,22 @@
     if (tbody) {
       tbody.addEventListener("click", function (e) {
         if (e.target.closest && e.target.closest("a")) return;
+        const btn = e.target.closest ? e.target.closest(".cov-events-btn") : null;
         const tr = e.target.closest ? e.target.closest("tr.cov-row") : null;
+        if (btn) {
+          selectRow(STATE.view[Number(btn.getAttribute("data-i"))]);
+          return;
+        }
         if (!tr) return;
-        STATE.selected = STATE.view[Number(tr.getAttribute("data-i"))];
-        paintTable();
-        paintDetail(STATE.selected);
+        selectRow(STATE.view[Number(tr.getAttribute("data-i"))]);
       });
     }
     if (STATE.selected) {
       const still = STATE.view.filter(function (r) { return r.id === STATE.selected.id; })[0];
-      paintDetail(still || null);
-      if (!still) STATE.selected = null;
+      if (!still) {
+        STATE.selected = null;
+        paintDetail(null);
+      }
     }
   }
   function showResult(rows, summary) {
@@ -374,8 +402,10 @@
     const result = must("cov-result");
     result.hidden = false;
     renderSummary(STATE.summary);
+    paintDetail(null);
     paintTable();
-    result.scrollIntoView({ behavior: "smooth", block: "start" });
+    const detail = $("cov-detail");
+    if (detail) detail.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function bindShell() {
     const bounds = monthBounds();
@@ -386,8 +416,7 @@
 
     document.querySelectorAll("#cov-universe .sub-pill").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        const universe = btn.getAttribute("data-universe");
-        setUniverse(universe);
+        setUniverse(btn.getAttribute("data-universe"));
         const preset = $("cov-preset");
         if (preset) preset.value = "";
         applyPreset("");
@@ -399,6 +428,11 @@
         applyPreset(preset.value);
       });
     }
+    document.querySelectorAll(".cov-mini[data-check]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        checkAll(btn.getAttribute("data-check"), btn.getAttribute("data-on") === "1");
+      });
+    });
     document.querySelectorAll("#cov-chips .cov-chip").forEach(function (btn) {
       btn.addEventListener("click", function () {
         STATE.covFilter = btn.getAttribute("data-cov");
@@ -432,7 +466,7 @@
         }
         showResult(body.rows || [], body.summary || {});
         showMsg("Готово: " + ((body.summary && body.summary.total) || 0) +
-          " карточек. Изучите таблицу ниже, затем «Сформировать файл».", true);
+          " карточек. Лента дел — в блоке над таблицей.", true);
       } catch (err) {
         showMsg((err && err.message) || "Сервер не отвечает.", false);
       } finally {
@@ -488,7 +522,8 @@
     checks($("cov-type"), "cov-type", enums.client_type);
     checks($("cov-dir"), "cov-dir", enums.direction);
     checks($("cov-lead-sem"), "cov-lead-sem", body.lead_semantic);
-    checks($("cov-mops"), "cov-mop", body.mops);
+    checks($("cov-mops-company"), "cov-company-mop", body.mops);
+    checks($("cov-mops-activity"), "cov-activity-mop", body.mops);
     fillPresets();
     applyPreset("");
   }
@@ -512,7 +547,7 @@
       fillMeta(body);
     } catch (err) {
       showMsg("Фильтры не загрузились: " + ((err && err.message) || err), false);
-      ["cov-mops", "cov-rfm", "cov-work", "cov-type", "cov-dir", "cov-lead-sem"].forEach(function (id) {
+      ["cov-mops-company", "cov-mops-activity", "cov-rfm", "cov-work", "cov-type", "cov-dir", "cov-lead-sem"].forEach(function (id) {
         const el = $(id);
         if (el && !el.innerHTML) el.innerHTML = "<p class='empty'>Не загрузилось</p>";
       });

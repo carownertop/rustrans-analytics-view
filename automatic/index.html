@@ -7,10 +7,10 @@
   <base href="./" />
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="static/brand.css?v=cov7" />
+  <link rel="stylesheet" href="static/brand.css?v=cov8" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub4"></script>
-  <script src="static/coverage.js?v=7"></script>
+  <script src="static/coverage.js?v=8"></script>
 </head>
 <body>
   <header class="head">
@@ -113,7 +113,7 @@
             </button>
             <div class="adv-body">
               <div>
-                <p class="adv-note">По умолчанию все значения включены — можно снять лишнее. Внутри поля отметьте несколько сразу. «Созданы» пустые = любые даты.</p>
+                <p class="adv-note">По умолчанию все значения включены. В каждом блоке — «Все» / «Сбросить». «Созданы» пустые = любые даты.</p>
                 <div class="filters">
                   <div>
                     <label class="field-label" for="cov-created-from">Созданы с</label>
@@ -124,21 +124,84 @@
                     <input id="cov-created-to" type="date" />
                   </div>
                 </div>
-                <span class="field-label">Ответственный</span>
-                <div class="mops" id="cov-mops"></div>
+
+                <div class="cov-field">
+                  <div class="cov-field-head">
+                    <span class="field-label">Ответственный за компанию</span>
+                    <div class="cov-field-actions">
+                      <button type="button" class="cov-mini" data-check="cov-company-mop" data-on="1">Все</button>
+                      <button type="button" class="cov-mini" data-check="cov-company-mop" data-on="0">Сбросить</button>
+                    </div>
+                  </div>
+                  <p class="hint" style="margin:0 0 8px">Кого берём в срез карточек (ASSIGNED компании / лида / контакта).</p>
+                  <div class="mops" id="cov-mops-company"></div>
+                </div>
+
+                <div class="cov-field">
+                  <div class="cov-field-head">
+                    <span class="field-label">Ответственный за дела</span>
+                    <div class="cov-field-actions">
+                      <button type="button" class="cov-mini" data-check="cov-activity-mop" data-on="1">Все</button>
+                      <button type="button" class="cov-mini" data-check="cov-activity-mop" data-on="0">Сбросить</button>
+                    </div>
+                  </div>
+                  <p class="hint" style="margin:0 0 8px">Чьи звонки / дела / письма считаем в периоде (RESPONSIBLE у активности).</p>
+                  <div class="mops" id="cov-mops-activity"></div>
+                </div>
+
                 <div id="cov-company-fields">
-                  <span class="field-label">RFM</span>
-                  <div class="mops" id="cov-rfm"></div>
-                  <span class="field-label">Статус работы с клиентом</span>
-                  <div class="mops" id="cov-work"></div>
-                  <span class="field-label">Тип клиента</span>
-                  <div class="mops" id="cov-type"></div>
-                  <span class="field-label">Направление</span>
-                  <div class="mops" id="cov-dir"></div>
+                  <div class="cov-field">
+                    <div class="cov-field-head">
+                      <span class="field-label">RFM</span>
+                      <div class="cov-field-actions">
+                        <button type="button" class="cov-mini" data-check="cov-rfm" data-on="1">Все</button>
+                        <button type="button" class="cov-mini" data-check="cov-rfm" data-on="0">Сбросить</button>
+                      </div>
+                    </div>
+                    <div class="mops" id="cov-rfm"></div>
+                  </div>
+                  <div class="cov-field">
+                    <div class="cov-field-head">
+                      <span class="field-label">Статус работы с клиентом</span>
+                      <div class="cov-field-actions">
+                        <button type="button" class="cov-mini" data-check="cov-work" data-on="1">Все</button>
+                        <button type="button" class="cov-mini" data-check="cov-work" data-on="0">Сбросить</button>
+                      </div>
+                    </div>
+                    <div class="mops" id="cov-work"></div>
+                  </div>
+                  <div class="cov-field">
+                    <div class="cov-field-head">
+                      <span class="field-label">Тип клиента</span>
+                      <div class="cov-field-actions">
+                        <button type="button" class="cov-mini" data-check="cov-type" data-on="1">Все</button>
+                        <button type="button" class="cov-mini" data-check="cov-type" data-on="0">Сбросить</button>
+                      </div>
+                    </div>
+                    <div class="mops" id="cov-type"></div>
+                  </div>
+                  <div class="cov-field">
+                    <div class="cov-field-head">
+                      <span class="field-label">Направление</span>
+                      <div class="cov-field-actions">
+                        <button type="button" class="cov-mini" data-check="cov-dir" data-on="1">Все</button>
+                        <button type="button" class="cov-mini" data-check="cov-dir" data-on="0">Сбросить</button>
+                      </div>
+                    </div>
+                    <div class="mops" id="cov-dir"></div>
+                  </div>
                 </div>
                 <div id="cov-lead-fields" hidden>
-                  <span class="field-label">Статус лида</span>
-                  <div class="mops" id="cov-lead-sem"></div>
+                  <div class="cov-field">
+                    <div class="cov-field-head">
+                      <span class="field-label">Статус лида</span>
+                      <div class="cov-field-actions">
+                        <button type="button" class="cov-mini" data-check="cov-lead-sem" data-on="1">Все</button>
+                        <button type="button" class="cov-mini" data-check="cov-lead-sem" data-on="0">Сбросить</button>
+                      </div>
+                    </div>
+                    <div class="mops" id="cov-lead-sem"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -158,8 +221,10 @@
               <button type="button" class="primary" id="cov-xlsx">Сформировать файл</button>
             </div>
             <p class="hint" id="cov-view-meta" style="margin:0 0 8px"></p>
+            <div id="cov-detail" class="cov-detail-panel">
+              <p class="hint" style="margin:0">Кликните строку в таблице ниже — здесь откроется полный список дел, звонков и описаний за период.</p>
+            </div>
             <div id="cov-table"></div>
-            <div id="cov-detail" class="cov-detail-panel" hidden></div>
           </div>
         </div>
       </section>

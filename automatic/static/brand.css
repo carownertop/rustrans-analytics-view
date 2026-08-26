@@ -747,8 +747,62 @@ table.flat tbody tr:nth-child(even) td:first-child { background: #fff; }
 .cov-badge.ok { background: var(--ok-bg); color: var(--ok); }
 .cov-badge.mail { background: #eef2f8; color: var(--navy); }
 .cov-badge.bad { background: var(--err-bg); color: var(--red); }
+.cov-field { margin: 14px 0 10px; }
+.cov-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.cov-field-head .field-label { margin: 0; }
+.cov-field-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.cov-mini {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cov-mini:hover { color: var(--navy); border-color: #aeb9c8; }
+.cov-events-btn {
+  appearance: none;
+  border: 1px solid var(--navy);
+  background: var(--navy);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cov-events-btn:hover { background: #16304f; }
+.cov-subject {
+  white-space: normal !important;
+  max-width: 260px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.cov-detail-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.cov-detail-count {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  white-space: nowrap;
+}
 .cov-detail-panel {
-  margin-top: 12px;
+  margin: 0 0 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px 16px;
