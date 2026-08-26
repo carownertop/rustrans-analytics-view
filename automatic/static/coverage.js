@@ -507,7 +507,7 @@
           if (st) {
             const stCls = stId === "ok" || stId === "opened" || stId === "inbound" ? "ok"
               : stId === "missed" || stId === "error" ? "bad"
-              : stId === "short" || stId === "no_read" ? "mail" : "";
+              : stId === "short" || stId === "no_read" || stId === "comment" ? "mail" : "";
             people.push("Статус: <span class=\"cov-call-st " + stCls + "\">" +
               escapeHtml(st) + "</span>");
           }
