@@ -20,7 +20,9 @@
     { key: "coverage_title", title: "Проработка" },
     { key: "last_kind", title: "Последнее" },
     { key: "has_deal", title: "Сделка" },
+    { key: "deal_links", title: "Открытые сделки" },
     { key: "has_sp", title: "СП" },
+    { key: "sp_links", title: "Открытые СП" },
   ];
 
   function $(id) {
@@ -164,11 +166,20 @@
     const cls = row.coverage === "touched" ? "ok" : row.coverage === "email" ? "mail" : "bad";
     return "<span class=\"cov-badge " + cls + "\">" + escapeHtml(row.coverage_title) + "</span>";
   }
+  function linkList(items) {
+    const list = items || [];
+    if (!list.length) return "—";
+    return list.map(function (link) {
+      return "<a class=\"file-link\" href=\"" + escapeHtml(link.url) +
+        "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(link.title || link.id) + "</a>";
+    }).join("<br>");
+  }
   function sortValue(row, key) {
     if (key === "coverage" || key === "coverage_title") {
       return ({ none: 0, email: 1, touched: 2 })[row.coverage] || 9;
     }
     if (key === "has_deal" || key === "has_sp") return row[key] ? 1 : 0;
+    if (key === "deal_links" || key === "sp_links") return (row[key] || []).length;
     if (key === "last_kind") return ((row.last_kind || "") + " " + (row.last_at || "")).toLowerCase();
     return String(row[key] == null ? "" : row[key]).toLowerCase();
   }
@@ -253,6 +264,14 @@
       "<span>Касаний: " + (row.touches || 0) + " · Писем: " + (row.emails || 0) + "</span>" +
       "<span>Сделка: " + (row.has_deal ? "да" : "нет") + " · СП: " +
       (row.has_sp ? "да" : "нет") + "</span></div>" +
+      ((row.deal_links && row.deal_links.length)
+        ? "<div class=\"cov-detail-meta\" style=\"margin-top:8px\"><span>Открытые сделки:</span> " +
+          linkList(row.deal_links) + "</div>"
+        : "") +
+      ((row.sp_links && row.sp_links.length)
+        ? "<div class=\"cov-detail-meta\" style=\"margin-top:8px\"><span>Открытые СП:</span> " +
+          linkList(row.sp_links) + "</div>"
+        : "") +
       (row.last_text || row.last_subject
         ? "<div class=\"cov-quote\">" + escapeHtml(row.last_subject || "") +
           (row.last_text ? "<br>" + escapeHtml(row.last_text) : "") + "</div>"
@@ -293,7 +312,9 @@
           "<td>" + escapeHtml(row.last_kind || "—") +
           (row.last_at ? " · " + escapeHtml(row.last_at) : "") + "</td>" +
           "<td>" + (row.has_deal ? "да" : "") + "</td>" +
-          "<td>" + (row.has_sp ? "да" : "") + "</td></tr>";
+          "<td class=\"cov-links\">" + linkList(row.deal_links) + "</td>" +
+          "<td>" + (row.has_sp ? "да" : "") + "</td>" +
+          "<td class=\"cov-links\">" + linkList(row.sp_links) + "</td></tr>";
       }).join("") +
       "</tbody></table></div>";
     table.querySelectorAll("th[data-sort]").forEach(function (th) {

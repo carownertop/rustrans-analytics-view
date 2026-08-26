@@ -723,6 +723,14 @@ table.flat tbody tr:nth-child(even) td:first-child { background: #fff; }
   color: #fff;
 }
 .cov-wrap { max-height: 560px; }
+.cov-wrap table.flat td.cov-links {
+  white-space: normal;
+  max-width: 220px;
+  line-height: 1.35;
+}
+.cov-wrap table.flat td.cov-links .file-link {
+  display: inline;
+}
 .cov-wrap table.flat th[data-sort] { cursor: pointer; user-select: none; }
 .cov-wrap table.flat th[data-sort]:hover { background: #16304f; }
 .cov-wrap table.flat tbody tr.cov-row { cursor: pointer; }
