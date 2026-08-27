@@ -8,11 +8,11 @@
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <meta http-equiv="Cache-Control" content="no-cache" />
-  <link rel="stylesheet" href="static/brand.css?v=mark9" />
+  <link rel="stylesheet" href="static/brand.css?v=mark10" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub4"></script>
   <script src="static/coverage.js?v=20"></script>
-  <script src="static/plan.js?v=1"></script>
+  <script src="static/plan.js?v=2"></script>
 </head>
 <body>
   <header class="head">
@@ -80,6 +80,16 @@
               </div>
               <button type="button" class="cov-mini" id="plan-clear-col-filters" hidden>Сбросить фильтры столбцов</button>
               <button type="button" class="primary" id="plan-xlsx">Сформировать файл</button>
+            </div>
+            <div class="plan-rev-filters">
+              <span class="field-label">Сумма покупок</span>
+              <div class="cov-chips" id="plan-rev-chips">
+                <button type="button" class="cov-chip" data-rev="lt50">до 50 тыс</button>
+                <button type="button" class="cov-chip" data-rev="b50_100">50–100 тыс</button>
+                <button type="button" class="cov-chip" data-rev="b100_300">100–300 тыс</button>
+                <button type="button" class="cov-chip" data-rev="b300_1m">300 тыс–1 млн</button>
+                <button type="button" class="cov-chip" data-rev="gt1m">более 1 млн</button>
+              </div>
             </div>
             <p class="hint" id="plan-view-meta" style="margin:0 0 8px"></p>
             <div id="plan-table"></div>

@@ -985,7 +985,17 @@ body.cov-resizing {
   font-size: 12px;
   line-height: 1.35;
 }
-.plan-member.head strong { color: var(--navy); }
+.plan-rev-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 10px;
+}
+.plan-rev-filters .field-label {
+  margin: 0;
+  white-space: nowrap;
+}
 .cov-wrap table.flat td.cov-subject {
   white-space: normal;
   line-height: 1.35;

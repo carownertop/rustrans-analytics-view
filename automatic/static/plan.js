@@ -6,6 +6,7 @@
     sortKey: "priority",
     sortDir: 1,
     planFilter: "all",
+    revenueBuckets: [],
     search: "",
     colWidths: {},
     colFilters: {},
@@ -116,6 +117,10 @@
     if (f === "sleep") return row.priority === "4. Спящие";
     return true;
   }
+  function matchesRevenueFilter(row) {
+    if (!STATE.revenueBuckets.length) return true;
+    return STATE.revenueBuckets.indexOf(row.revenue_bucket) >= 0;
+  }
   function sortValue(row, key) {
     if (key === "gk") return row.members_count || 1;
     if (key === "priority") return PRIO_RANK[row.priority] != null ? PRIO_RANK[row.priority] : 9;
@@ -128,7 +133,7 @@
   }
   function baseFilteredRows() {
     const q = (STATE.search || "").trim().toLowerCase();
-    let rows = STATE.rows.slice().filter(matchesPlanFilter);
+    let rows = STATE.rows.slice().filter(matchesPlanFilter).filter(matchesRevenueFilter);
     if (q) {
       rows = rows.filter(function (r) {
         const members = (r.members || []).map(function (m) { return m.name; }).join(" ");
@@ -283,6 +288,14 @@
       btn.classList.toggle("on", btn.getAttribute("data-plan") === STATE.planFilter);
     });
   }
+  function syncRevChips() {
+    const set = {};
+    STATE.revenueBuckets.forEach(function (id) { set[id] = true; });
+    document.querySelectorAll("#plan-rev-chips .cov-chip").forEach(function (btn) {
+      const id = btn.getAttribute("data-rev");
+      btn.classList.toggle("on", !!set[id]);
+    });
+  }
   function renderSummary(summary) {
     const box = $("plan-summary");
     if (!box) return;
@@ -424,6 +437,7 @@
     STATE.rows = rows || [];
     STATE.summary = summary || {};
     STATE.planFilter = "all";
+    STATE.revenueBuckets = [];
     STATE.search = "";
     STATE.colFilters = {};
     STATE.expanded = {};
@@ -431,6 +445,7 @@
     const search = $("plan-search");
     if (search) search.value = "";
     syncChips();
+    syncRevChips();
     const result = must("plan-result");
     result.hidden = false;
     renderSummary(STATE.summary);
@@ -452,9 +467,14 @@
           report_date: ($("plan-date") && $("plan-date").value) || null,
         }),
       });
-      const body = await res.json();
-      if (!body.ok) {
-        showMsg(body.error || "Не собралось", false);
+      const raw = await res.text();
+      let body = null;
+      try { body = raw ? JSON.parse(raw) : null; } catch (err) {
+        showMsg("Сервер вернул ошибку (не JSON). Код " + res.status + ".", false);
+        return;
+      }
+      if (!body || !body.ok) {
+        showMsg((body && body.error) || ("Не собралось (код " + res.status + ")"), false);
         return;
       }
       showResult(body.rows || [], body.summary || {});
@@ -519,6 +539,17 @@
         syncChips();
         paintTable();
         renderSummary(STATE.summary);
+      });
+    });
+    document.querySelectorAll("#plan-rev-chips .cov-chip").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const id = btn.getAttribute("data-rev");
+        if (!id) return;
+        const idx = STATE.revenueBuckets.indexOf(id);
+        if (idx >= 0) STATE.revenueBuckets.splice(idx, 1);
+        else STATE.revenueBuckets.push(id);
+        syncRevChips();
+        paintTable();
       });
     });
     const clearBtn = $("plan-clear-col-filters");
