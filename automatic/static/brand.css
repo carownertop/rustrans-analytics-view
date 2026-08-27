@@ -961,6 +961,36 @@ body.cov-resizing {
 .cov-badge.partial { background: #fff4e6; color: #b45309; }
 .cov-badge.mail { background: #eef2f8; color: var(--navy); }
 .cov-badge.bad { background: var(--err-bg); color: var(--red); }
+.plan-exp {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--navy);
+}
+.plan-exp:hover { background: #eaf0f7; }
+.plan-members td {
+  background: #f7f9fc !important;
+  padding: 8px 12px !important;
+}
+.plan-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.plan-member {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.plan-member.head strong { color: var(--navy); }
+.cov-wrap table.flat td.cov-subject {
+  white-space: normal;
+  line-height: 1.35;
+  vertical-align: top;
+}
 .cov-field { margin: 14px 0 10px; }
 .cov-field-head {
   display: flex;

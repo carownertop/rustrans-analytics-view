@@ -8,10 +8,11 @@
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <meta http-equiv="Cache-Control" content="no-cache" />
-  <link rel="stylesheet" href="static/brand.css?v=mark8" />
+  <link rel="stylesheet" href="static/brand.css?v=mark9" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub4"></script>
   <script src="static/coverage.js?v=20"></script>
+  <script src="static/plan.js?v=1"></script>
 </head>
 <body>
   <header class="head">
@@ -64,6 +65,25 @@
           </div>
           <button type="button" class="primary" id="plan-btn">Собрать план продаж</button>
           <div class="msg" id="plan-msg"></div>
+          <div id="plan-result" class="cov-result" hidden>
+            <div id="plan-summary" class="cov-summary"></div>
+            <div class="cov-toolbar">
+              <input id="plan-search" type="search" placeholder="Поиск по таблице…" />
+              <div class="cov-chips" id="plan-chips">
+                <button type="button" class="cov-chip on" data-plan="all">Все</button>
+                <button type="button" class="cov-chip" data-plan="with_stock">На складе</button>
+                <button type="button" class="cov-chip" data-plan="without">Без совпадения</button>
+                <button type="button" class="cov-chip" data-plan="hot">Горячие</button>
+                <button type="button" class="cov-chip" data-plan="new">Новые</button>
+                <button type="button" class="cov-chip" data-plan="delayed">Задержались</button>
+                <button type="button" class="cov-chip" data-plan="sleep">Спящие</button>
+              </div>
+              <button type="button" class="cov-mini" id="plan-clear-col-filters" hidden>Сбросить фильтры столбцов</button>
+              <button type="button" class="primary" id="plan-xlsx">Сформировать файл</button>
+            </div>
+            <p class="hint" id="plan-view-meta" style="margin:0 0 8px"></p>
+            <div id="plan-table"></div>
+          </div>
         </div>
 
         <div class="subpanel" id="build-segmentation">
@@ -212,7 +232,7 @@
     const BUILD_COPY = {
       plan: {
         title: "План продаж",
-        lead: "Кому звонить и что предложить со склада. Пустой список МОПов — сбор по всей команде.",
+        lead: "Соберите таблицу, отфильтруйте срез, затем «Сформировать файл». Пустой список МОПов — вся команда.",
       },
       segmentation: {
         title: "Сегментация",
@@ -400,13 +420,6 @@
       }
     }
 
-    document.getElementById("plan-btn").addEventListener("click", () => {
-      const managers = [...document.querySelectorAll("input[name=mop]:checked")].map((i) => i.value);
-      buildReport("plan", document.getElementById("plan-btn"), document.getElementById("plan-msg"), {
-        managers,
-        report_date: document.getElementById("plan-date").value || null,
-      });
-    });
     document.getElementById("seg-btn").addEventListener("click", () => {
       const company = document.getElementById("seg-company").checked;
       const managers = [...document.querySelectorAll("input[name=seg-mop]:checked")].map((i) => i.value);
