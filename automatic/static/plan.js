@@ -5,12 +5,14 @@
     view: [],
     sortKey: "priority",
     sortDir: 1,
-    planFilter: "all",
+    stockFilters: [],
+    priorityFilters: [],
     revenueBuckets: [],
     search: "",
     colWidths: {},
     colFilters: {},
     openFilter: null,
+    openPicker: null,
     expanded: {},
   };
 
@@ -38,6 +40,24 @@
   };
   const MULTI_FILTER_COLS = { brands: true };
   const PRIO_RANK = { "1. Горячие": 0, "2. Новые": 1, "3. Задержались": 2, "4. Спящие": 3 };
+  const STOCK_ITEMS = [
+    { id: "with_stock", title: "На складе" },
+    { id: "without", title: "Без совпадения" },
+  ];
+  const PRIO_ITEMS = [
+    { id: "1. Горячие", title: "Горячие" },
+    { id: "2. Новые", title: "Новые" },
+    { id: "3. Задержались", title: "Задержались" },
+    { id: "4. Спящие", title: "Спящие" },
+  ];
+  const REV_ITEMS = [
+    { id: "lt50", title: "до 50 тыс" },
+    { id: "b50_100", title: "50–100 тыс" },
+    { id: "b100_300", title: "100–300 тыс" },
+    { id: "b300_1m", title: "300 тыс–1 млн" },
+    { id: "gt1m", title: "более 1 млн" },
+  ];
+  const PICKER_STORE = {};
 
   function $(id) { return document.getElementById(id); }
   function must(id) {
@@ -106,16 +126,17 @@
     }
     return allowed.indexOf(cellFilterText(row, key)) >= 0;
   }
-  function matchesPlanFilter(row) {
-    const f = STATE.planFilter;
-    if (f === "all") return true;
-    if (f === "with_stock") return !!row.with_stock;
-    if (f === "without") return !row.with_stock;
-    if (f === "hot") return row.priority === "1. Горячие";
-    if (f === "new") return row.priority === "2. Новые";
-    if (f === "delayed") return row.priority === "3. Задержались";
-    if (f === "sleep") return row.priority === "4. Спящие";
-    return true;
+  function matchesStockFilter(row) {
+    if (!STATE.stockFilters.length) return true;
+    const wantStock = STATE.stockFilters.indexOf("with_stock") >= 0;
+    const wantWithout = STATE.stockFilters.indexOf("without") >= 0;
+    if (wantStock && row.with_stock) return true;
+    if (wantWithout && !row.with_stock) return true;
+    return false;
+  }
+  function matchesPriorityFilter(row) {
+    if (!STATE.priorityFilters.length) return true;
+    return STATE.priorityFilters.indexOf(row.priority) >= 0;
   }
   function matchesRevenueFilter(row) {
     if (!STATE.revenueBuckets.length) return true;
@@ -133,7 +154,10 @@
   }
   function baseFilteredRows() {
     const q = (STATE.search || "").trim().toLowerCase();
-    let rows = STATE.rows.slice().filter(matchesPlanFilter).filter(matchesRevenueFilter);
+    let rows = STATE.rows.slice()
+      .filter(matchesStockFilter)
+      .filter(matchesPriorityFilter)
+      .filter(matchesRevenueFilter);
     if (q) {
       rows = rows.filter(function (r) {
         const members = (r.members || []).map(function (m) { return m.name; }).join(" ");
@@ -200,6 +224,166 @@
     const pop = $("plan-col-filter-pop");
     if (pop) pop.hidden = true;
   }
+  function closePickerPop() {
+    STATE.openPicker = null;
+    const pop = $("plan-picker-pop");
+    if (pop) pop.hidden = true;
+    document.querySelectorAll("#plan-result .cov-picker-btn.on").forEach(function (btn) {
+      btn.classList.remove("on");
+    });
+  }
+  function pickerSelected(name) {
+    if (name === "plan-stock") return STATE.stockFilters.slice();
+    if (name === "plan-prio") return STATE.priorityFilters.slice();
+    if (name === "plan-rev") return STATE.revenueBuckets.slice();
+    return [];
+  }
+  function setPickerSelected(name, ids) {
+    if (name === "plan-stock") STATE.stockFilters = ids;
+    else if (name === "plan-prio") STATE.priorityFilters = ids;
+    else if (name === "plan-rev") STATE.revenueBuckets = ids;
+  }
+  function pickerSummaryText(name, items) {
+    const selected = pickerSelected(name);
+    const total = (items || []).length;
+    if (!selected.length || selected.length === total) return "Все";
+    const titles = (items || []).filter(function (item) {
+      return selected.indexOf(item.id) >= 0;
+    }).map(function (item) { return item.title; });
+    if (titles.length <= 2) return titles.join(", ");
+    return titles.length + " из " + total;
+  }
+  function updatePickerSummary(name) {
+    const host = document.querySelector("#plan-result .cov-picker[data-name=\"" + name + "\"]");
+    if (!host) return;
+    const items = PICKER_STORE[name] || [];
+    const summary = host.querySelector(".cov-picker-summary");
+    const text = pickerSummaryText(name, items);
+    if (summary) summary.textContent = text;
+    const btn = host.querySelector(".cov-picker-btn");
+    if (btn) btn.classList.toggle("cov-picker-btn-empty", text === "Ничего не выбрано");
+  }
+  function mountPicker(host, name, items) {
+    if (!host) return;
+    PICKER_STORE[name] = items || [];
+    const label = host.getAttribute("data-label") || name;
+    host.setAttribute("data-name", name);
+    const selected = pickerSelected(name);
+    const all = !selected.length;
+    const set = {};
+    selected.forEach(function (id) { set[String(id)] = true; });
+    const storeHtml = (items || []).map(function (item) {
+      const on = all || set[String(item.id)];
+      return "<label><input type=\"checkbox\" value=\"" + escapeHtml(item.id) + "\"" +
+        (on ? " checked" : "") + " /> <span>" + escapeHtml(item.title) + "</span></label>";
+    }).join("");
+    host.innerHTML =
+      "<div class=\"cov-picker\" data-name=\"" + escapeHtml(name) + "\">" +
+      "<button type=\"button\" class=\"cov-picker-btn\" aria-haspopup=\"listbox\">" +
+      "<span class=\"cov-picker-label\">" + escapeHtml(label) + "</span>" +
+      "<span class=\"cov-picker-summary\">" + escapeHtml(pickerSummaryText(name, items)) + "</span>" +
+      "<span class=\"cov-picker-chev\">▾</span></button>" +
+      "<div class=\"cov-picker-store\" data-name=\"" + escapeHtml(name) + "\" hidden>" + storeHtml + "</div></div>";
+    const btn = host.querySelector(".cov-picker-btn");
+    if (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openPickerPop(name, btn);
+      });
+    }
+    updatePickerSummary(name);
+  }
+  function openPickerPop(name, anchor) {
+    const store = document.querySelector("#plan-result .cov-picker-store[data-name=\"" + name + "\"]");
+    if (!store) return;
+    if (STATE.openPicker === name) {
+      closePickerPop();
+      return;
+    }
+    closeColFilter();
+    let pop = $("plan-picker-pop");
+    if (!pop) {
+      pop = document.createElement("div");
+      pop.id = "plan-picker-pop";
+      pop.className = "cov-picker-pop";
+      document.body.appendChild(pop);
+    }
+    STATE.openPicker = name;
+    anchor.classList.add("on");
+    const title = anchor.querySelector(".cov-picker-label");
+    const items = PICKER_STORE[name] || [];
+    const selected = pickerSelected(name);
+    const all = !selected.length;
+    const set = {};
+    selected.forEach(function (id) { set[String(id)] = true; });
+    pop.hidden = false;
+    pop.innerHTML =
+      "<div class=\"cov-picker-pop-head\">" + escapeHtml(title ? title.textContent : name) + "</div>" +
+      "<input type=\"search\" class=\"cov-picker-pop-q\" placeholder=\"Поиск…\" />" +
+      "<div class=\"cov-picker-pop-actions\">" +
+      "<button type=\"button\" data-act=\"all\">Все</button>" +
+      "<button type=\"button\" data-act=\"none\">Сбросить</button>" +
+      "<button type=\"button\" data-act=\"done\" class=\"primary\">Готово</button></div>" +
+      "<div class=\"cov-picker-pop-list\">" +
+      items.map(function (item) {
+        const on = all || set[String(item.id)];
+        return "<label><input type=\"checkbox\" value=\"" + escapeHtml(item.id) + "\"" +
+          (on ? " checked" : "") + " /> <span>" + escapeHtml(item.title) + "</span></label>";
+      }).join("") +
+      "</div>";
+    const listEl = pop.querySelector(".cov-picker-pop-list");
+    const rect = anchor.getBoundingClientRect();
+    const width = Math.min(320, window.innerWidth - 24);
+    let left = rect.left;
+    if (left + width > window.innerWidth - 12) left = Math.max(12, window.innerWidth - width - 12);
+    pop.style.width = width + "px";
+    pop.style.left = left + "px";
+    pop.style.top = Math.min(rect.bottom + 6, window.innerHeight - 320) + "px";
+    const q = pop.querySelector(".cov-picker-pop-q");
+    if (q) {
+      q.addEventListener("input", function () {
+        const needle = q.value.trim().toLowerCase();
+        listEl.querySelectorAll("label").forEach(function (lab) {
+          const text = (lab.textContent || "").toLowerCase();
+          lab.style.display = !needle || text.indexOf(needle) >= 0 ? "" : "none";
+        });
+      });
+      setTimeout(function () { q.focus(); }, 0);
+    }
+    pop.onclick = function (e) {
+      e.stopPropagation();
+      const btn = e.target.closest ? e.target.closest("[data-act]") : null;
+      if (!btn) return;
+      const act = btn.getAttribute("data-act");
+      if (act === "all") {
+        listEl.querySelectorAll("input").forEach(function (el) {
+          if (el.closest("label").style.display === "none") return;
+          el.checked = true;
+        });
+        return;
+      }
+      if (act === "none") {
+        listEl.querySelectorAll("input").forEach(function (el) { el.checked = false; });
+        return;
+      }
+      if (act === "done") {
+        const picked = Array.prototype.slice.call(listEl.querySelectorAll("input:checked"))
+          .map(function (el) { return el.value; });
+        if (!picked.length || picked.length === items.length) setPickerSelected(name, []);
+        else setPickerSelected(name, picked);
+        closePickerPop();
+        updatePickerSummary(name);
+        paintTable();
+        renderSummary(STATE.summary);
+      }
+    };
+  }
+  function mountPlanPickers() {
+    mountPicker($("plan-pick-stock"), "plan-stock", STOCK_ITEMS);
+    mountPicker($("plan-pick-prio"), "plan-prio", PRIO_ITEMS);
+    mountPicker($("plan-pick-rev"), "plan-rev", REV_ITEMS);
+  }
   function openColFilter(key, anchor) {
     let pop = $("plan-col-filter-pop");
     if (!pop) {
@@ -209,6 +393,7 @@
       document.body.appendChild(pop);
     }
     STATE.openFilter = key;
+    closePickerPop();
     const values = uniqueColValues(key);
     const hasFilter = colFilterActive(key);
     const selected = hasFilter ? (STATE.colFilters[key] || []) : null;
@@ -283,23 +468,11 @@
       }
     };
   }
-  function syncChips() {
-    document.querySelectorAll("#plan-chips .cov-chip").forEach(function (btn) {
-      btn.classList.toggle("on", btn.getAttribute("data-plan") === STATE.planFilter);
-    });
-  }
-  function syncRevChips() {
-    const set = {};
-    STATE.revenueBuckets.forEach(function (id) { set[id] = true; });
-    document.querySelectorAll("#plan-rev-chips .cov-chip").forEach(function (btn) {
-      const id = btn.getAttribute("data-rev");
-      btn.classList.toggle("on", !!set[id]);
-    });
-  }
   function renderSummary(summary) {
     const box = $("plan-summary");
     if (!box) return;
     summary = summary || {};
+    const stockOnly = STATE.stockFilters.length === 1 ? STATE.stockFilters[0] : "";
     const items = [
       ["all", "В срезе", summary.total],
       ["with_stock", "На складе", summary.with_stock],
@@ -308,15 +481,24 @@
     ];
     box.innerHTML = items.map(function (item) {
       const clickable = item[0] !== "groups";
-      const on = clickable && ((item[0] === "all" && STATE.planFilter === "all") || item[0] === STATE.planFilter);
+      const on = clickable && (
+        (item[0] === "all" && !STATE.stockFilters.length && !STATE.priorityFilters.length && !STATE.revenueBuckets.length) ||
+        (item[0] !== "all" && stockOnly === item[0] && !STATE.priorityFilters.length && !STATE.revenueBuckets.length)
+      );
       return "<div class=\"cov-kpi" + (on ? " on" : "") + "\" data-plan=\"" +
         (clickable ? item[0] : "") + "\"><span>" + item[1] + "</span><b>" + (item[2] == null ? 0 : item[2]) + "</b></div>";
     }).join("");
     box.querySelectorAll(".cov-kpi[data-plan]").forEach(function (el) {
       if (!el.getAttribute("data-plan")) return;
       el.addEventListener("click", function () {
-        STATE.planFilter = el.getAttribute("data-plan");
-        syncChips();
+        const key = el.getAttribute("data-plan");
+        STATE.priorityFilters = [];
+        STATE.revenueBuckets = [];
+        if (key === "all") STATE.stockFilters = [];
+        else STATE.stockFilters = [key];
+        updatePickerSummary("plan-stock");
+        updatePickerSummary("plan-prio");
+        updatePickerSummary("plan-rev");
         paintTable();
         renderSummary(STATE.summary);
       });
@@ -436,18 +618,19 @@
   function showResult(rows, summary) {
     STATE.rows = rows || [];
     STATE.summary = summary || {};
-    STATE.planFilter = "all";
+    STATE.stockFilters = [];
+    STATE.priorityFilters = [];
     STATE.revenueBuckets = [];
     STATE.search = "";
     STATE.colFilters = {};
     STATE.expanded = {};
     closeColFilter();
+    closePickerPop();
     const search = $("plan-search");
     if (search) search.value = "";
-    syncChips();
-    syncRevChips();
     const result = must("plan-result");
     result.hidden = false;
+    mountPlanPickers();
     renderSummary(STATE.summary);
     paintTable();
     result.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -561,10 +744,17 @@
       });
     }
     document.addEventListener("click", function (e) {
-      const pop = $("plan-col-filter-pop");
-      if (!pop || pop.hidden) return;
-      if (!(e.target.closest && (e.target.closest("#plan-col-filter-pop") || e.target.closest(".cov-th-filter")))) {
-        closeColFilter();
+      const colPop = $("plan-col-filter-pop");
+      if (colPop && !colPop.hidden) {
+        if (!(e.target.closest && (e.target.closest("#plan-col-filter-pop") || e.target.closest(".cov-th-filter")))) {
+          closeColFilter();
+        }
+      }
+      const pickPop = $("plan-picker-pop");
+      if (pickPop && !pickPop.hidden) {
+        if (!(e.target.closest && (e.target.closest("#plan-picker-pop") || e.target.closest(".cov-picker-btn")))) {
+          closePickerPop();
+        }
       }
     });
   }

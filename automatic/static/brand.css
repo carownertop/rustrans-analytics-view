@@ -985,16 +985,16 @@ body.cov-resizing {
   font-size: 12px;
   line-height: 1.35;
 }
-.plan-rev-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin: 0 0 10px;
+.plan-toolbar {
+  align-items: flex-start;
 }
-.plan-rev-filters .field-label {
+.plan-filter-pickers {
+  flex: 1 1 420px;
   margin: 0;
-  white-space: nowrap;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+}
+.plan-rev-filters {
+  display: none;
 }
 .cov-wrap table.flat td.cov-subject {
   white-space: normal;

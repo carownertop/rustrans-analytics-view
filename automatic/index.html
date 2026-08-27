@@ -8,11 +8,11 @@
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <meta http-equiv="Cache-Control" content="no-cache" />
-  <link rel="stylesheet" href="static/brand.css?v=mark10" />
+  <link rel="stylesheet" href="static/brand.css?v=mark11" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub4"></script>
   <script src="static/coverage.js?v=20"></script>
-  <script src="static/plan.js?v=2"></script>
+  <script src="static/plan.js?v=3"></script>
 </head>
 <body>
   <header class="head">
@@ -67,29 +67,15 @@
           <div class="msg" id="plan-msg"></div>
           <div id="plan-result" class="cov-result" hidden>
             <div id="plan-summary" class="cov-summary"></div>
-            <div class="cov-toolbar">
+            <div class="cov-toolbar plan-toolbar">
               <input id="plan-search" type="search" placeholder="Поиск по таблице…" />
-              <div class="cov-chips" id="plan-chips">
-                <button type="button" class="cov-chip on" data-plan="all">Все</button>
-                <button type="button" class="cov-chip" data-plan="with_stock">На складе</button>
-                <button type="button" class="cov-chip" data-plan="without">Без совпадения</button>
-                <button type="button" class="cov-chip" data-plan="hot">Горячие</button>
-                <button type="button" class="cov-chip" data-plan="new">Новые</button>
-                <button type="button" class="cov-chip" data-plan="delayed">Задержались</button>
-                <button type="button" class="cov-chip" data-plan="sleep">Спящие</button>
+              <div class="plan-filter-pickers cov-picker-grid">
+                <div id="plan-pick-stock" class="cov-picker-host" data-name="plan-stock" data-label="Склад"></div>
+                <div id="plan-pick-prio" class="cov-picker-host" data-name="plan-prio" data-label="Приоритет"></div>
+                <div id="plan-pick-rev" class="cov-picker-host" data-name="plan-rev" data-label="Сумма покупок"></div>
               </div>
               <button type="button" class="cov-mini" id="plan-clear-col-filters" hidden>Сбросить фильтры столбцов</button>
               <button type="button" class="primary" id="plan-xlsx">Сформировать файл</button>
-            </div>
-            <div class="plan-rev-filters">
-              <span class="field-label">Сумма покупок</span>
-              <div class="cov-chips" id="plan-rev-chips">
-                <button type="button" class="cov-chip" data-rev="lt50">до 50 тыс</button>
-                <button type="button" class="cov-chip" data-rev="b50_100">50–100 тыс</button>
-                <button type="button" class="cov-chip" data-rev="b100_300">100–300 тыс</button>
-                <button type="button" class="cov-chip" data-rev="b300_1m">300 тыс–1 млн</button>
-                <button type="button" class="cov-chip" data-rev="gt1m">более 1 млн</button>
-              </div>
             </div>
             <p class="hint" id="plan-view-meta" style="margin:0 0 8px"></p>
             <div id="plan-table"></div>
