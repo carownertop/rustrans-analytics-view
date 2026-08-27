@@ -3,6 +3,7 @@
     rows: [],
     summary: null,
     view: [],
+    selected: null,
     sortKey: "priority",
     sortDir: 1,
     stockFilters: [],
@@ -17,8 +18,8 @@
   };
 
   const COLS = [
-    { key: "gk", title: "ГК" },
     { key: "name", title: "Клиент" },
+    { key: "gk", title: "ГК" },
     { key: "manager", title: "МОП" },
     { key: "priority", title: "Приоритет" },
     { key: "rfm", title: "RFM" },
@@ -30,13 +31,13 @@
     { key: "revenue", title: "Выручка" },
     { key: "stock_hits", title: "На складе" },
     { key: "brands", title: "Бренды" },
-    { key: "top_bought", title: "Топ товара" },
-    { key: "offers", title: "Что предложить" },
+    { key: "bought_count", title: "Покупки" },
+    { key: "offers_count", title: "Что предложить" },
   ];
   const COL_DEFAULT_W = {
-    gk: 56, name: 220, manager: 140, priority: 110, rfm: 110, lifecycle: 120,
-    days_since_buy: 90, median_interval: 90, avg_check: 100, days_in_base: 90,
-    revenue: 110, stock_hits: 80, brands: 140, top_bought: 260, offers: 280,
+    name: 200, gk: 52, manager: 120, priority: 96, rfm: 92, lifecycle: 100,
+    days_since_buy: 72, median_interval: 72, avg_check: 84, days_in_base: 72,
+    revenue: 92, stock_hits: 64, brands: 120, bought_count: 72, offers_count: 88,
   };
   const MULTI_FILTER_COLS = { brands: true };
   const PRIO_RANK = { "1. Горячие": 0, "2. Новые": 1, "3. Задержались": 2, "4. Спящие": 3 };
@@ -112,8 +113,10 @@
       return row[key] == null || row[key] === "" ? "—" : String(row[key]);
     }
     if (key === "brands") return String(row.brands || "—");
-    if (key === "top_bought") return String(row.top_bought || "—");
+    if (key === "bought_count") return String(row.bought_count || (row.bought || []).length || 0);
+    if (key === "offers_count") return String(countOffers(row));
     if (key === "offers") return String(row.offers || "—");
+    if (key === "top_bought") return String(row.bought_text || row.top_bought || "—");
     const raw = row[key];
     return String(raw == null || raw === "" ? "—" : raw);
   }
@@ -146,8 +149,13 @@
     if (key === "gk") return row.members_count || 1;
     if (key === "priority") return PRIO_RANK[row.priority] != null ? PRIO_RANK[row.priority] : 9;
     if (key === "avg_check" || key === "revenue" || key === "days_since_buy" ||
-        key === "median_interval" || key === "days_in_base" || key === "stock_hits") {
-      const n = Number(row[key]);
+        key === "median_interval" || key === "days_in_base" || key === "stock_hits" ||
+        key === "bought_count" || key === "offers_count") {
+      const n = Number(
+        key === "bought_count" ? (row.bought_count || (row.bought || []).length || 0)
+          : key === "offers_count" ? countOffers(row)
+          : row[key]
+      );
       return isFinite(n) ? n : -1;
     }
     return String(row[key] == null ? "" : row[key]).toLowerCase();
@@ -162,7 +170,7 @@
       rows = rows.filter(function (r) {
         const members = (r.members || []).map(function (m) { return m.name; }).join(" ");
         return [r.name, r.manager, r.priority, r.rfm, r.lifecycle, r.brands,
-          r.top_bought, r.offers, members].join(" ").toLowerCase().indexOf(q) >= 0;
+          r.bought_text, r.top_bought, r.offers, members].join(" ").toLowerCase().indexOf(q) >= 0;
       });
     }
     return rows;
@@ -515,13 +523,183 @@
     if (members.length <= 1) return "";
     return "<tr class=\"plan-members\"><td colspan=\"" + COLS.length + "\">" +
       "<div class=\"plan-members-list\">" + members.map(function (m) {
+        const title = m.url
+          ? "<a class=\"file-link\" href=\"" + escapeHtml(m.url) +
+            "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(m.name || "") + "</a>"
+          : "<strong>" + escapeHtml(m.name || "") + "</strong>";
         return "<div class=\"plan-member" + (m.is_head ? " head" : "") + "\">" +
-          "<strong>" + escapeHtml(m.name || "") + "</strong>" +
-          (m.in_plan ? "" : " <span class=\"hint\">нет в плане МОПа</span>") +
+          title +
           "<span class=\"hint\"> · ср.чек " + money(m.avg_check) +
           " · в базе " + num(m.days_in_base) +
-          " · выручка " + money(m.revenue) + "</span></div>";
+          " · выручка " + money(m.revenue) +
+          (m.in_plan ? "" : " · нет реализаций в 1С у этого МОПа") +
+          "</span></div>";
       }).join("") + "</div></td></tr>";
+  }
+  function nameCell(row) {
+    const label = escapeHtml(row.name || "—");
+    if (row.url) {
+      return "<a class=\"file-link\" href=\"" + escapeHtml(row.url) +
+        "\" target=\"_blank\" rel=\"noopener\">" + label + "</a>";
+    }
+    return label;
+  }
+  function countOffers(row) {
+    if (row.offers_count != null && row.offers_count !== "") {
+      const n = Number(row.offers_count);
+      if (isFinite(n)) return n;
+    }
+    if (row.offer_items && row.offer_items.length) return row.offer_items.length;
+    const text = String(row.offers || "").trim();
+    if (!text || text === "нет подходящих позиций в остатках") return 0;
+    return offerBlocks(text).length;
+  }
+  function boughtCountCell(row) {
+    const n = Number(row.bought_count || (row.bought || []).length || 0);
+    return "<button type=\"button\" class=\"plan-bought-btn\" data-id=\"" +
+      escapeHtml(row.id) + "\" data-focus=\"bought\">" + n + " →</button>";
+  }
+  function offersCountCell(row) {
+    const n = countOffers(row);
+    return "<button type=\"button\" class=\"plan-bought-btn\" data-id=\"" +
+      escapeHtml(row.id) + "\" data-focus=\"offers\">" + n + " →</button>";
+  }
+  function offerBlocks(text) {
+    return String(text || "")
+      .split(/\n-\n/)
+      .map(function (s) { return s.trim(); })
+      .filter(Boolean);
+  }
+  function paintDetail(row, focus) {
+    const panel = $("plan-detail");
+    if (!panel) return;
+    if (!row) {
+      panel.innerHTML = "<p class=\"hint\" style=\"margin:0\">Кликните «N →» у покупок или предложений — здесь откроется полный список.</p>";
+      return;
+    }
+    const bought = row.bought || [];
+    const boughtList = bought.length
+      ? "<div class=\"cov-timeline\">" + bought.map(function (item) {
+          return "<div class=\"cov-event\">" +
+            "<div class=\"cov-event-title\">" + escapeHtml(item.display || "—") + "</div>" +
+            "<div class=\"cov-event-meta\">" +
+            escapeHtml(String(Math.round(Number(item.qty) || 0))) + " шт · " +
+            money(item.revenue) + " · последний раз " +
+            escapeHtml(item.last_month || "—") +
+            "</div></div>";
+        }).join("") + "</div>"
+      : "<p class=\"hint\" style=\"margin:8px 0 0\">Нет разбивки покупок по SKU</p>";
+    const offerItems = row.offer_items || [];
+    let offersHtml;
+    if (offerItems.length) {
+      offersHtml = "<div class=\"cov-timeline\">" + offerItems.map(function (item) {
+        return "<div class=\"cov-event\">" +
+          "<div class=\"cov-event-title\">" + escapeHtml(item.display || "—") + "</div>" +
+          "<div class=\"cov-event-meta\">" +
+          escapeHtml(item.note || "повтор") + " · " +
+          escapeHtml(item.location || "—") + " · " +
+          escapeHtml(String(Math.round(Number(item.qty) || 0))) + " шт · " +
+          money(item.price) +
+          (item.article ? " · арт. " + escapeHtml(String(item.article)) : "") +
+          "</div></div>";
+      }).join("") + "</div>";
+    } else {
+      const blocks = offerBlocks(row.offers).filter(function (b) {
+        return b !== "нет подходящих позиций в остатках";
+      });
+      offersHtml = blocks.length
+        ? "<div class=\"cov-timeline\">" + blocks.map(function (b) {
+            return "<div class=\"cov-event\"><div class=\"cov-quote\" style=\"white-space:pre-wrap;margin:0\">" +
+              escapeHtml(b) + "</div></div>";
+          }).join("") + "</div>"
+        : "<p class=\"hint\" style=\"margin:8px 0 0\">нет подходящих позиций в остатках</p>";
+    }
+    const members = row.members || [];
+    const membersHtmlBlock = members.length > 1
+      ? "<div class=\"cov-detail-meta\" style=\"margin-top:8px\"><span>Состав ГК:</span> " +
+        members.map(function (m) {
+          const label = escapeHtml(m.name || "—");
+          const link = m.url
+            ? "<a class=\"file-link\" href=\"" + escapeHtml(m.url) +
+              "\" target=\"_blank\" rel=\"noopener\">" + label + "</a>"
+            : label;
+          return link + " (" + money(m.revenue) +
+            (m.in_plan ? "" : ", нет реализаций в 1С") + ")";
+        }).join(" · ") + "</div>"
+      : "";
+    const title = row.url
+      ? "<a class=\"file-link\" href=\"" + escapeHtml(row.url) +
+        "\" target=\"_blank\" rel=\"noopener\">" + escapeHtml(row.name || "—") + "</a>"
+      : escapeHtml(row.name || "—");
+    const countLabel = focus === "offers"
+      ? (offerItems.length || offerBlocks(row.offers).length) + " предложений"
+      : bought.length + " покупок";
+    panel.innerHTML =
+      "<div class=\"cov-detail-top\">" +
+      "<h3>" + title + "</h3>" +
+      "<span class=\"cov-detail-count\">" + countLabel + "</span></div>" +
+      "<div class=\"cov-detail-meta\">" +
+      "<span>" + prioBadge(row.priority) + "</span>" +
+      "<span>МОП: " + escapeHtml(row.manager || "—") + "</span>" +
+      "<span>RFM: " + escapeHtml(row.rfm || "—") + "</span>" +
+      "<span>ГК: " + (row.members_count || 1) + "</span>" +
+      "<span>Выручка: " + money(row.revenue) + "</span></div>" +
+      membersHtmlBlock +
+      "<h4 class=\"cov-events-title\" id=\"plan-detail-bought\">Все купленные позиции</h4>" + boughtList +
+      "<h4 class=\"cov-events-title\" id=\"plan-detail-offers\">Что предложить</h4>" + offersHtml;
+    const anchor = focus === "offers" ? $("plan-detail-offers") : $("plan-detail-bought");
+    if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  function selectRow(row, focus) {
+    STATE.selected = row || null;
+    paintTable();
+    paintDetail(STATE.selected, focus || "bought");
+    const panel = $("plan-detail");
+    if (panel && STATE.selected) {
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
+  function tipAttr(text) {
+    const t = String(text == null ? "" : text).replace(/\s+/g, " ").trim();
+    if (!t || t === "—") return "";
+    return " title=\"" + escapeHtml(t) + "\"";
+  }
+  function bindColResize(tableRoot) {
+    tableRoot.querySelectorAll(".cov-col-resize").forEach(function (handle) {
+      handle.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const key = handle.getAttribute("data-resize");
+        const th = handle.closest("th");
+        if (!th || !key) return;
+        const startX = e.clientX;
+        const startW = th.getBoundingClientRect().width;
+        function onMove(ev) {
+          const w = Math.max(56, Math.round(startW + (ev.clientX - startX)));
+          STATE.colWidths[key] = w;
+          th.style.width = w + "px";
+          th.style.minWidth = w + "px";
+          th.style.maxWidth = w + "px";
+          const idx = COLS.findIndex(function (c) { return c.key === key; });
+          if (idx < 0) return;
+          tableRoot.querySelectorAll("tbody tr.cov-row").forEach(function (tr) {
+            const td = tr.children[idx];
+            if (!td) return;
+            td.style.width = w + "px";
+            td.style.minWidth = w + "px";
+            td.style.maxWidth = w + "px";
+          });
+        }
+        function onUp() {
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+          document.body.classList.remove("cov-resizing");
+        }
+        document.body.classList.add("cov-resizing");
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      });
+    });
   }
   function paintTable() {
     STATE.view = visibleRows();
@@ -529,7 +707,8 @@
     if (meta) {
       const filt = hasColFilters() ? " · есть фильтры по столбцам" : "";
       meta.textContent = "На экране " + STATE.view.length + " из " + STATE.rows.length +
-        filt + ". «Сформировать файл» — Excel видимого среза.";
+        filt +
+        ". Тяните край заголовка — ширина колонки. Наведите на ячейку — полный текст. «Сформировать файл» — Excel видимого среза.";
     }
     const clearBtn = $("plan-clear-col-filters");
     if (clearBtn) clearBtn.hidden = !hasColFilters();
@@ -537,6 +716,7 @@
     if (!table) return;
     if (!STATE.rows.length) {
       table.innerHTML = "<p class='empty'>Нет строк.</p>";
+      paintDetail(null);
       return;
     }
     function arrow(key) {
@@ -551,26 +731,38 @@
       ? STATE.view.map(function (row) {
           const open = !!STATE.expanded[row.id];
           const canExpand = (row.members_count || 1) > 1;
+          const selected = STATE.selected && STATE.selected.id === row.id;
+          const gkLabel = String(row.members_count || 1);
           const gk = canExpand
             ? "<button type=\"button\" class=\"plan-exp\" data-id=\"" + escapeHtml(row.id) + "\">" +
-              (open ? "−" : "+") + " " + (row.members_count || 1) + "</button>"
-            : String(row.members_count || 1);
-          return "<tr class=\"cov-row\">" +
-            "<td style=\"" + colStyle("gk") + "\">" + gk + "</td>" +
-            "<td style=\"" + colStyle("name") + "\">" + escapeHtml(row.name || "—") + "</td>" +
-            "<td style=\"" + colStyle("manager") + "\">" + escapeHtml(row.manager || "—") + "</td>" +
-            "<td style=\"" + colStyle("priority") + "\">" + prioBadge(row.priority) + "</td>" +
-            "<td style=\"" + colStyle("rfm") + "\">" + escapeHtml(row.rfm || "—") + "</td>" +
-            "<td style=\"" + colStyle("lifecycle") + "\">" + escapeHtml(row.lifecycle || "—") + "</td>" +
-            "<td style=\"" + colStyle("days_since_buy") + "\">" + num(row.days_since_buy) + "</td>" +
-            "<td style=\"" + colStyle("median_interval") + "\">" + num(row.median_interval) + "</td>" +
-            "<td style=\"" + colStyle("avg_check") + "\">" + money(row.avg_check) + "</td>" +
-            "<td style=\"" + colStyle("days_in_base") + "\">" + num(row.days_in_base) + "</td>" +
-            "<td style=\"" + colStyle("revenue") + "\">" + money(row.revenue) + "</td>" +
-            "<td style=\"" + colStyle("stock_hits") + "\">" + num(row.stock_hits) + "</td>" +
-            "<td style=\"" + colStyle("brands") + "\">" + escapeHtml(row.brands || "—") + "</td>" +
-            "<td class=\"cov-subject\" style=\"" + colStyle("top_bought") + "\">" + blockHtml(row.top_bought) + "</td>" +
-            "<td class=\"cov-subject\" style=\"" + colStyle("offers") + "\">" + blockHtml(row.offers) + "</td>" +
+              (open ? "−" : "+") + " " + gkLabel + "</button>"
+            : gkLabel;
+          const daysBuy = num(row.days_since_buy);
+          const median = num(row.median_interval);
+          const avg = money(row.avg_check);
+          const daysBase = num(row.days_in_base);
+          const rev = money(row.revenue);
+          const stock = num(row.stock_hits);
+          const brands = row.brands || "—";
+          const boughtN = String(row.bought_count || (row.bought || []).length || 0);
+          const offersN = String(countOffers(row));
+          return "<tr class=\"cov-row" + (selected ? " on" : "") + "\" data-id=\"" +
+            escapeHtml(row.id) + "\">" +
+            "<td style=\"" + colStyle("name") + "\"" + tipAttr(row.name) + ">" + nameCell(row) + "</td>" +
+            "<td style=\"" + colStyle("gk") + "\"" + tipAttr("ГК: " + gkLabel) + ">" + gk + "</td>" +
+            "<td style=\"" + colStyle("manager") + "\"" + tipAttr(row.manager) + ">" + escapeHtml(row.manager || "—") + "</td>" +
+            "<td style=\"" + colStyle("priority") + "\"" + tipAttr(row.priority) + ">" + prioBadge(row.priority) + "</td>" +
+            "<td style=\"" + colStyle("rfm") + "\"" + tipAttr(row.rfm) + ">" + escapeHtml(row.rfm || "—") + "</td>" +
+            "<td style=\"" + colStyle("lifecycle") + "\"" + tipAttr(row.lifecycle) + ">" + escapeHtml(row.lifecycle || "—") + "</td>" +
+            "<td style=\"" + colStyle("days_since_buy") + "\"" + tipAttr(daysBuy) + ">" + daysBuy + "</td>" +
+            "<td style=\"" + colStyle("median_interval") + "\"" + tipAttr(median) + ">" + median + "</td>" +
+            "<td style=\"" + colStyle("avg_check") + "\"" + tipAttr(avg) + ">" + avg + "</td>" +
+            "<td style=\"" + colStyle("days_in_base") + "\"" + tipAttr(daysBase) + ">" + daysBase + "</td>" +
+            "<td style=\"" + colStyle("revenue") + "\"" + tipAttr(rev) + ">" + rev + "</td>" +
+            "<td style=\"" + colStyle("stock_hits") + "\"" + tipAttr(stock) + ">" + stock + "</td>" +
+            "<td style=\"" + colStyle("brands") + "\"" + tipAttr(brands) + ">" + escapeHtml(brands) + "</td>" +
+            "<td style=\"" + colStyle("bought_count") + "\"" + tipAttr("Покупок: " + boughtN) + ">" + boughtCountCell(row) + "</td>" +
+            "<td style=\"" + colStyle("offers_count") + "\"" + tipAttr("Предложений: " + offersN) + ">" + offersCountCell(row) + "</td>" +
             "</tr>" + (open ? membersHtml(row) : "");
         }).join("")
       : "<tr><td colspan=\"" + COLS.length + "\" class=\"empty\">Нет строк под текущий поиск и фильтры.</td></tr>";
@@ -578,18 +770,20 @@
       "<div class=\"table-wrap cov-wrap\"><table class=\"flat cov-grid\"><thead><tr>" +
       COLS.map(function (c) {
         const active = colFilterActive(c.key);
-        return "<th data-sort=\"" + c.key + "\" style=\"" + colStyle(c.key) + "\">" +
+        return "<th data-sort=\"" + c.key + "\" style=\"" + colStyle(c.key) + "\"" + tipAttr(c.title) + ">" +
           "<span class=\"cov-th-main\">" +
           "<span class=\"cov-th-title\">" + escapeHtml(c.title) + arrow(c.key) + "</span>" +
           "<button type=\"button\" class=\"cov-th-filter" + (active ? " on" : "") +
           "\" data-filter=\"" + c.key + "\" title=\"Фильтр по значениям\">▾</button>" +
-          "</span></th>";
+          "</span>" +
+          "<span class=\"cov-col-resize\" data-resize=\"" + c.key + "\" title=\"Тянуть ширину\"></span>" +
+          "</th>";
       }).join("") +
       "</tr></thead><tbody>" + bodyHtml + "</tbody></table></div>";
 
     table.querySelectorAll("th[data-sort]").forEach(function (th) {
       th.addEventListener("click", function (e) {
-        if (e.target.closest && e.target.closest(".cov-th-filter")) return;
+        if (e.target.closest && (e.target.closest(".cov-th-filter") || e.target.closest(".cov-col-resize"))) return;
         const key = th.getAttribute("data-sort");
         if (STATE.sortKey === key) STATE.sortDir *= -1;
         else {
@@ -607,11 +801,36 @@
         else openColFilter(key, btn);
       });
     });
+    bindColResize(table);
     table.querySelectorAll(".plan-exp").forEach(function (btn) {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
         const id = btn.getAttribute("data-id");
         STATE.expanded[id] = !STATE.expanded[id];
         paintTable();
+      });
+    });
+    table.querySelectorAll(".plan-bought-btn").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-id");
+        const focus = btn.getAttribute("data-focus") || "bought";
+        const row = STATE.view.find(function (r) { return r.id === id; }) ||
+          STATE.rows.find(function (r) { return r.id === id; });
+        selectRow(row || null, focus);
+      });
+    });
+    table.querySelectorAll("tr.cov-row").forEach(function (tr) {
+      tr.addEventListener("click", function (e) {
+        if (e.target.closest && (
+          e.target.closest("a") ||
+          e.target.closest("button") ||
+          e.target.closest(".plan-exp")
+        )) return;
+        const id = tr.getAttribute("data-id");
+        const row = STATE.view.find(function (r) { return r.id === id; }) ||
+          STATE.rows.find(function (r) { return r.id === id; });
+        selectRow(row || null, "bought");
       });
     });
   }
@@ -624,6 +843,7 @@
     STATE.search = "";
     STATE.colFilters = {};
     STATE.expanded = {};
+    STATE.selected = null;
     closeColFilter();
     closePickerPop();
     const search = $("plan-search");
@@ -633,6 +853,7 @@
     mountPlanPickers();
     renderSummary(STATE.summary);
     paintTable();
+    paintDetail(null);
     result.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   async function buildTable() {
