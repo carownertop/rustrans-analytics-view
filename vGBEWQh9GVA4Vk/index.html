@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Загрузка 1С · Rustrans</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:#0b1c33; --navy-2:#132744; --red:#e30613; --muted:#5b6b7c;
+      --line:#d9e0ea; --ok:#1b7f4e; --ok-bg:#e7f6ee; --err-bg:#fdecea;
+      --ease:cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    * { box-sizing:border-box; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration:0.01ms !important;
+        transition-duration:0.01ms !important;
+      }
+    }
+    body {
+      margin:0; min-height:100vh; font-family:Montserrat,system-ui,sans-serif; color:var(--navy);
+      background:
+        radial-gradient(900px 420px at 8% -8%, rgba(227,6,19,.11), transparent 52%),
+        radial-gradient(700px 380px at 96% 0%, rgba(11,28,51,.10), transparent 48%),
+        linear-gradient(165deg, #f7f9fc, #e8eef6 55%, #f3f6fa);
+      padding:32px 16px 48px;
+    }
+    .wrap { width:min(560px,100%); margin:0 auto; }
+    .topnav { display:flex; justify-content:flex-end; gap:14px; margin:0 0 10px; }
+    .to-analytics {
+      font-size:12px; font-weight:700; color:var(--muted); text-decoration:none;
+      transition:color .18s ease;
+    }
+    .to-analytics:hover { color:var(--navy); }
+    .brand { display:flex; align-items:baseline; gap:10px; margin:0 0 6px; }
+    h1 { margin:0; font-size:26px; font-weight:800; letter-spacing:-.03em; }
+    .pill {
+      font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--navy); background:rgba(11,28,51,.06); border-radius:999px; padding:4px 9px;
+    }
+    .sub { margin:0 0 20px; color:var(--muted); font-size:13px; line-height:1.5; }
+    .card {
+      background:#fff; border:1px solid var(--line); border-radius:20px; padding:22px;
+      box-shadow:0 18px 44px rgba(11,28,51,.07);
+      animation:rise .45s var(--ease) both;
+    }
+    .card + .card { margin-top:12px; animation-delay:.06s; }
+    @keyframes rise {
+      from { opacity:0; transform:translateY(10px); }
+      to { opacity:1; transform:none; }
+    }
+    label.field, .field-label {
+      display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.04em; color:var(--muted); margin:0 0 6px;
+    }
+    input[type=password], select {
+      width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
+      font:inherit; font-size:14px; font-weight:600; margin-bottom:14px; background:#fbfcfe;
+      transition:border-color .18s ease, box-shadow .18s ease;
+    }
+    input[type=password]:focus, select:focus {
+      outline:none; border-color:#8fa3bd;
+      box-shadow:0 0 0 3px rgba(11,28,51,.08);
+    }
+    .drop {
+      border:2px dashed #b7c4d6; border-radius:16px; padding:30px 18px; text-align:center;
+      background:linear-gradient(180deg,#f8fafc,#f3f6fa); cursor:pointer;
+      transition:border-color .2s var(--ease), background .2s ease, transform .2s var(--ease);
+    }
+    .drop:hover { border-color:#8fa3bd; }
+    .drop.drag { border-color:var(--navy); background:#eef3f9; transform:scale(1.01); }
+    .drop.has-files { border-style:solid; border-color:rgba(11,28,51,.18); background:#f7fafc; }
+    .drop strong { display:block; font-size:14px; font-weight:800; }
+    .drop span { display:block; margin-top:6px; color:var(--muted); font-size:12px; line-height:1.4; }
+    .flist { list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
+    .flist:empty { display:none; }
+    .flist li {
+      display:flex; align-items:center; gap:10px; justify-content:space-between;
+      padding:9px 11px; border-radius:12px; background:#f4f7fb; border:1px solid rgba(19,39,68,.06);
+      animation:rise .3s var(--ease) both; font-size:12px; font-weight:600;
+    }
+    .flist .meta { min-width:0; flex:1; }
+    .flist .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--navy); }
+    .flist .sz { color:var(--muted); font-weight:500; font-size:11px; margin-top:2px; }
+    .flist .rm {
+      flex:0 0 auto; border:0; background:transparent; color:var(--muted);
+      font:inherit; font-size:11px; font-weight:700; cursor:pointer; padding:4px 6px; border-radius:8px;
+    }
+    .flist .rm:hover { color:var(--red); background:var(--err-bg); }
+    button.primary, #unlock, #send {
+      margin-top:4px; width:100%; border:0; border-radius:12px; padding:13px 14px;
+      background:linear-gradient(180deg,#132744,var(--navy)); color:#fff;
+      font:inherit; font-weight:700; cursor:pointer;
+      box-shadow:0 8px 20px rgba(11,28,51,.18);
+      transition:transform .14s var(--ease), opacity .18s ease, box-shadow .18s ease;
+    }
+    button.primary:hover:not(:disabled), #unlock:hover:not(:disabled), #send:hover:not(:disabled) {
+      transform:translateY(-1px); box-shadow:0 12px 26px rgba(11,28,51,.22);
+    }
+    button.primary:disabled, #unlock:disabled, #send:disabled { opacity:.55; cursor:wait; transform:none; box-shadow:none; }
+    .adv { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+    .adv-toggle {
+      display:flex; align-items:center; gap:8px; width:100%;
+      border:0; background:transparent; padding:4px 0; cursor:pointer;
+      font:inherit; font-size:12px; font-weight:700; color:var(--muted); text-align:left;
+    }
+    .adv-toggle:hover { color:var(--navy); }
+    .chev {
+      width:16px; height:16px; border-radius:5px; background:#eef2f7;
+      display:inline-flex; align-items:center; justify-content:center;
+      transition:transform .22s var(--ease); font-size:10px; color:var(--navy);
+    }
+    .adv.open .chev { transform:rotate(90deg); }
+    .adv-body {
+      display:grid; grid-template-rows:0fr; transition:grid-template-rows .28s var(--ease);
+      opacity:0;
+    }
+    .adv.open .adv-body {
+      grid-template-rows:1fr; opacity:1;
+      transition:grid-template-rows .28s var(--ease), opacity .2s ease .05s;
+    }
+    .adv-body > div { overflow:hidden; }
+    .adv-note { margin:8px 0 10px; font-size:11px; color:var(--muted); line-height:1.45; }
+    .adv.open select { margin-bottom:0; }
+    .msg {
+      margin-top:14px; font-size:13px; font-weight:600; display:none;
+      white-space:pre-wrap; line-height:1.45;
+      border-radius:12px; padding:12px 14px;
+      animation:rise .35s var(--ease) both;
+    }
+    .msg.show { display:block; }
+    .msg.ok { color:var(--ok); background:var(--ok-bg); border:1px solid rgba(27,127,78,.2); }
+    .msg.err { color:var(--red); background:var(--err-bg); border:1px solid rgba(227,6,19,.22); }
+    .msg.warn { color:#8a5a00; background:#fff7e6; border:1px solid rgba(180,120,0,.22); }
+    .progress {
+      display:none; margin-top:14px; padding:12px 14px; border-radius:12px;
+      background:#f4f7fb; border:1px solid rgba(19,39,68,.08);
+    }
+    .progress.show { display:block; animation:rise .3s var(--ease) both; }
+    .progress .plabel {
+      font-size:12px; font-weight:700; color:var(--navy); margin:0 0 8px;
+      display:flex; justify-content:space-between; gap:8px;
+    }
+    .progress .plabel span:last-child { color:var(--muted); font-variant-numeric:tabular-nums; }
+    .progress .track {
+      height:10px; border-radius:999px; background:#e4ebf4; overflow:hidden;
+      position:relative;
+    }
+    .progress .bar {
+      height:100%; width:0%; border-radius:999px;
+      background:linear-gradient(90deg, var(--navy), #2a4a78 55%, var(--red));
+      transition:width .45s var(--ease);
+    }
+    .progress.indeterminate .bar {
+      width:35% !important;
+      animation:slide 1.1s ease-in-out infinite;
+    }
+    @keyframes slide {
+      0% { transform:translateX(-30%); }
+      100% { transform:translateX(220%); }
+    }
+    .toast {
+      position:fixed; right:16px; bottom:16px; z-index:40;
+      max-width:min(360px, calc(100vw - 32px));
+      padding:12px 14px; border-radius:14px; font-size:13px; font-weight:700;
+      box-shadow:0 14px 36px rgba(11,28,51,.18);
+      transform:translateY(12px); opacity:0; pointer-events:none;
+      transition:opacity .25s var(--ease), transform .25s var(--ease);
+    }
+    .toast.show { opacity:1; transform:none; pointer-events:auto; }
+    .toast.ok { background:#123524; color:#dff5e8; }
+    .toast.err { background:#5c1010; color:#ffe3e3; }
+    .hint { font-size:12px; color:var(--muted); line-height:1.5; }
+    code { font-size:11px; background:#eef2f7; padding:1px 5px; border-radius:4px; }
+    #gate { display:block; }
+    #app { display:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topnav">
+      <a class="to-analytics" href="https://141-105-71-134.sslip.io/">Main</a>
+      <a class="to-analytics" href="https://141-105-71-134.sslip.io/jGauTnQDLLRc3j/">← К аналитике</a>
+    </div>
+    <div class="brand">
+      <h1>Загрузка 1С</h1>
+      <span class="pill">xlsx</span>
+    </div>
+    <p class="sub">Войдите паролем, выберите тип (реализации или оплаты) и загрузите один файл .xlsx.</p>
+
+    <div class="card" id="gate">
+      <label class="field" for="password">Пароль</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      <button type="button" class="primary" id="unlock">Войти</button>
+      <p class="adv-note" style="margin:10px 0 0">После входа пароль сохранится в cookie на 7 дней — повторно вводить не нужно.</p>
+      <div class="msg" id="gate-msg"></div>
+    </div>
+
+    <div id="app">
+      <div class="card">
+        <label class="field" for="kind">Тип файла</label>
+        <select id="kind" name="kind">
+          <option value="" selected disabled>Выберите…</option>
+          <option value="realizations">Реализации</option>
+          <option value="payments">Оплаты</option>
+        </select>
+        <p class="adv-note" style="margin:0 0 14px">Тип указываете вы. Один файл за раз — так оплаты не перепутаются с реализациями.</p>
+
+        <label class="field">Файл</label>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Выбрать файл">
+          <strong>Перетащите XLSX сюда</strong>
+          <span>один файл · или нажмите, чтобы выбрать · до 25 МБ</span>
+          <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden />
+        </div>
+        <ul class="flist" id="flist" aria-live="polite"></ul>
+
+        <button type="button" class="primary" id="send" style="margin-top:14px">Загрузить и разобрать</button>
+        <div class="progress" id="progress" aria-live="polite">
+          <div class="plabel"><span id="progressLabel">Обработка…</span><span id="progressPct">0%</span></div>
+          <div class="track"><div class="bar" id="progressBar"></div></div>
+        </div>
+        <div class="msg" id="msg" role="status"></div>
+      </div>
+      <div class="card hint">
+        Форма на GitHub Pages шлёт файл на VPS (<code>/u</code>). Сначала тип, потом один .xlsx.
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="alert"></div>
+
+  <script>
+    const BLOBS = [{"salt": "W9SRSd+DZZk7OwhmRJ3cPA==", "iv": "mWrz4KDFVuf93KSV", "data": "aiTKu4LQ8aRFCmfWmGCLgpCoHU3FJvMGvBxHymUEenKkSttNkdj50kn9A7dL4jgdu7SE04be09cPs4mLHpNxi09dgInNCFSYBVro3imd9Wn2", "cookie": "rtl_manage_pw"}, {"salt": "l9h6Oqwvac7Y/WjIxUgAPw==", "iv": "tK0qV/0z1PqbuOlW", "data": "BnV/YVuR7q8/N8hod1wISId/wxDxv4Z+K+w4JowVhDlFx3xxvRfgV3AlZtcUSjwuXWUqZGGCdVnmQwvsLSs/th90ToTG4FGv2E4toczWJCFj", "cookie": "rtl_manage_pw"}];
+    const ITERATIONS = 50000;
+    let CFG = null;
+    let PASS = "";
+    const REMEMBER_DAYS = 7;
+    const PW_COOKIES = ["rtl_manage_pw", "rtl_hub_pw"];
+
+    /** Path cookie: для GitHub Pages project site нужен префикс репо, не только "/" */
+    function cookiePaths() {
+      const parts = location.pathname.split("/").filter(Boolean);
+      const paths = new Set(["/"]);
+      if (parts.length) paths.add("/" + parts[0] + "/");
+      return Array.from(paths);
+    }
+    function setPwCookie(pw, cookieName) {
+      const maxAge = REMEMBER_DAYS * 24 * 60 * 60;
+      const secure = location.protocol === "https:" ? "; Secure" : "";
+      const val = encodeURIComponent(pw);
+      cookiePaths().forEach(path => {
+        document.cookie = cookieName + "=" + val
+          + "; Max-Age=" + maxAge + "; Path=" + path + "; SameSite=Lax" + secure;
+      });
+    }
+    function getPwCookie(name) {
+      const parts = document.cookie.split(";");
+      for (const raw of parts) {
+        const p = raw.trim();
+        if (p.startsWith(name + "=")) return decodeURIComponent(p.slice(name.length + 1));
+      }
+      return "";
+    }
+    function clearPwCookie(cookieName) {
+      cookiePaths().forEach(path => {
+        document.cookie = cookieName + "=; Max-Age=0; Path=" + path + "; SameSite=Lax";
+      });
+    }
+
+    function lockUi() {
+      CFG = null;
+      PASS = "";
+      document.getElementById("gate").style.display = "block";
+      document.getElementById("app").style.display = "none";
+    }
+    function openUi() {
+      document.getElementById("gate").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    }
+
+    const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+    async function deriveKey(password, salt) {
+      const enc = new TextEncoder();
+      const base = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+      return crypto.subtle.deriveKey(
+        { name:"PBKDF2", salt, iterations:ITERATIONS, hash:"SHA-256" },
+        base,
+        { name:"AES-GCM", length:256 },
+        false,
+        ["decrypt"]
+      );
+    }
+
+    async function unlock(password) {
+      const pw = (password || "").trim();
+      if (!pw) throw new Error("empty password");
+      let lastErr = null;
+      for (const blob of BLOBS) {
+        try {
+          const key = await deriveKey(pw, b64(blob.salt));
+          const plain = await crypto.subtle.decrypt(
+            { name:"AES-GCM", iv:b64(blob.iv) }, key, b64(blob.data)
+          );
+          CFG = JSON.parse(new TextDecoder().decode(plain));
+          if (!CFG || !CFG.api) throw new Error("bad config");
+          PASS = pw;
+          // Важно: писать ТОЛЬКО cookie этого blob.
+          // Иначе пароль manage затрёт rtl_hub_pw и слетит вход на главной витрине.
+          setPwCookie(pw, blob.cookie || "rtl_manage_pw");
+          openUi();
+          return;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error("bad password");
+    }
+
+    function show(el, text, type) {
+      el.textContent = text;
+      el.className = "msg show " + (type || "err");
+    }
+
+    const toast = document.getElementById("toast");
+    let toastTimer = null;
+    function showToast(text, type) {
+      toast.className = "toast show " + type;
+      toast.textContent = text;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.classList.remove("show"); }, 4200);
+    }
+
+    lockUi();
+
+    document.getElementById("unlock").onclick = async () => {
+      const el = document.getElementById("gate-msg");
+      el.className = "msg";
+      try {
+        await unlock(document.getElementById("password").value);
+      } catch (e) {
+        // не трогаем rtl_hub_pw — это cookie главной аналитики
+        clearPwCookie("rtl_manage_pw");
+        lockUi();
+        show(el, "Неверный пароль", "err");
+        showToast("Неверный пароль", "err");
+      }
+    };
+    document.getElementById("password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("unlock").click();
+    });
+
+    (async () => {
+      for (const name of PW_COOKIES) {
+        const saved = getPwCookie(name);
+        if (!saved) continue;
+        try {
+          await unlock(saved);
+          return;
+        } catch (e) {
+          /* try next cookie */
+        }
+      }
+      lockUi();
+    })();
+
+    const drop = document.getElementById("drop");
+    const fileInput = document.getElementById("file");
+    const flist = document.getElementById("flist");
+    const kindSel = document.getElementById("kind");
+    /** @type {File|null} */
+    let chosen = null;
+
+    function fmtSize(n) {
+      if (n < 1024) return n + " Б";
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " КБ";
+      return (n / 1024 / 1024).toFixed(1) + " МБ";
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+    function renderList() {
+      drop.classList.toggle("has-files", !!chosen);
+      if (!chosen) { flist.innerHTML = ""; return; }
+      flist.innerHTML = `
+        <li>
+          <div class="meta">
+            <div class="nm">${escapeHtml(chosen.name)}</div>
+            <div class="sz">${fmtSize(chosen.size)}</div>
+          </div>
+          <button type="button" class="rm" aria-label="Убрать">убрать</button>
+        </li>`;
+    }
+    function setFile(f) {
+      if (!f) { chosen = null; renderList(); return; }
+      const low = (f.name || "").toLowerCase();
+      if (!low.endsWith(".xlsx") && !low.endsWith(".xls")) return;
+      chosen = f;
+      renderList();
+    }
+
+    flist.addEventListener("click", e => {
+      if (!e.target.closest(".rm")) return;
+      chosen = null;
+      renderList();
+    });
+    drop.addEventListener("click", () => fileInput.click());
+    drop.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
+    });
+    fileInput.addEventListener("change", () => {
+      setFile(fileInput.files && fileInput.files[0]);
+      fileInput.value = "";
+    });
+    drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("drag"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+    drop.addEventListener("drop", e => {
+      e.preventDefault(); drop.classList.remove("drag");
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) setFile(f);
+    });
+
+    document.getElementById("send").onclick = async () => {
+      const msg = document.getElementById("msg");
+      const progress = document.getElementById("progress");
+      const progressBar = document.getElementById("progressBar");
+      const progressLabel = document.getElementById("progressLabel");
+      const progressPct = document.getElementById("progressPct");
+      msg.className = "msg";
+      if (!CFG) { show(msg, "Сначала введите пароль", "err"); showToast("Нужен вход", "err"); return; }
+      if (!kindSel.value) { show(msg, "Выберите тип: реализации или оплаты", "err"); showToast("Нужен тип", "err"); return; }
+      if (!chosen) { show(msg, "Выберите один файл .xlsx", "err"); showToast("Нет файла", "err"); return; }
+      const btn = document.getElementById("send");
+      btn.disabled = true;
+      btn.textContent = "Отправка…";
+
+      let pollTimer = null;
+      const stopPoll = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
+      const setProgress = (pct, label, indeterminate) => {
+        progress.classList.add("show");
+        progress.classList.toggle("indeterminate", !!indeterminate);
+        const p = Math.max(0, Math.min(100, pct | 0));
+        progressBar.style.width = p + "%";
+        progressPct.textContent = indeterminate ? "…" : (p + "%");
+        if (label) progressLabel.textContent = label;
+      };
+      const statusUrl = CFG.api.replace(/\/$/, "") + "/api/upload/status";
+      setProgress(4, "Отправка файла на сервер…", true);
+      pollTimer = setInterval(async () => {
+        try {
+          const sr = await fetch(statusUrl, { cache: "no-store" });
+          if (!sr.ok) return;
+          const st = await sr.json();
+          if (!st || st.phase === "idle") return;
+          setProgress(st.pct || 0, st.label || "Обработка…", false);
+        } catch (e) { /* ignore poll errors */ }
+      }, 700);
+
+      try {
+        if (chosen.size > 25 * 1024 * 1024) throw new Error("Файл больше 25 МБ");
+        const fd = new FormData();
+        fd.append("password", PASS);
+        fd.append("kind", kindSel.value);
+        fd.append("file", chosen, chosen.name);
+        const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/upload", { method: "POST", body: fd });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
+        setProgress(100, "Готово", false);
+        const summary = j.summary || (("Готово: " + (j.path || "")) + (j.hint ? ("\n" + j.hint) : ""));
+        show(msg, summary, "ok");
+        showToast("Загрузка успешна", "ok");
+        chosen = null;
+        renderList();
+      } catch (e) {
+        const m = String(e.message || e);
+        show(msg, m.includes("Failed to fetch")
+          ? "Сервер не отвечает. Проверьте VPS API / сеть."
+          : m, "err");
+        showToast("Ошибка загрузки", "err");
+        progress.classList.remove("show");
+      } finally {
+        stopPoll();
+        btn.disabled = false;
+        btn.textContent = "Загрузить и разобрать";
+        setTimeout(() => { progress.classList.remove("show"); }, 1600);
+      }
+    };
+  </script>
+</body>
+</html>

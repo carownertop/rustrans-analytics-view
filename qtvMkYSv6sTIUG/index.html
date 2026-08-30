@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Планы МОП · Rustrans</title>
+  <link rel="icon" href="https://141-105-71-134.sslip.io/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="https://141-105-71-134.sslip.io/favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="https://141-105-71-134.sslip.io/apple-touch-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { --navy:#0b1c33; --red:#e30613; --muted:#5b6b7c; --line:#d9e0ea; }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; font-family:Montserrat,system-ui,sans-serif; color:var(--navy);
+      background:
+        radial-gradient(900px 420px at 12% -10%, rgba(227,6,19,.10), transparent 55%),
+        linear-gradient(165deg, #f7f9fc, #e8eef6 55%, #f3f6fa);
+      padding:28px 16px;
+    }
+    .wrap { width:min(1100px,100%); margin:0 auto; }
+    h1 { margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:-.03em; }
+    .sub { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
+    .card {
+      background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
+      box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
+    }
+    .field-label {
+      display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.04em; color:var(--muted); margin:0 0 6px;
+    }
+    input[type=password], input[type=month], input[type=number], button { font:inherit; }
+    input[type=password], input[type=month], input[type=number] {
+      width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
+      margin-bottom:12px; background:#fbfcfe; font-weight:600;
+    }
+    input[type=number]:disabled { opacity:.45; background:#eef2f7; }
+    .meta {
+      display:flex; flex-wrap:wrap; gap:10px 16px; font-size:12px; color:var(--muted);
+      margin:0 0 14px; padding:10px 12px; background:#f7fafc; border-radius:12px;
+    }
+    .meta strong { color:var(--navy); }
+    .sec { border-top:1px solid var(--line); padding-top:14px; margin-top:14px; }
+    .sec:first-child { border-top:0; padding-top:0; margin-top:0; }
+    .sec h3 { margin:0 0 10px; font-size:13px; font-weight:800; }
+    .metric {
+      border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:10px;
+      background:#fbfcfe;
+    }
+    .metric.undef { background:#f3f5f8; }
+    .metric-head {
+      display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:space-between;
+      margin-bottom:8px;
+    }
+    .metric-head .lab { font-size:13px; font-weight:700; }
+    .chk {
+      display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--muted);
+      cursor:pointer; user-select:none;
+    }
+    .chk input { width:16px; height:16px; accent-color:var(--navy); }
+    .mgr {
+      display:grid; grid-template-columns:1fr 150px; gap:8px; align-items:center;
+      margin-top:6px;
+    }
+    .mgr .name { font-size:13px; font-weight:700; }
+    .mgr input { margin-bottom:0; }
+    button {
+      width:100%; border:0; border-radius:12px; padding:13px 18px;
+      background:var(--navy); color:#fff; font-weight:700; cursor:pointer;
+    }
+    button.secondary {
+      background:#fff; color:var(--navy); border:1px solid #c9d3e0; margin-bottom:12px;
+    }
+    button:disabled { opacity:.55; cursor:wait; }
+    .msg { margin-top:12px; font-size:13px; font-weight:600; display:none; white-space:pre-wrap; }
+    .msg.show { display:block; }
+    .msg.ok { color:#1b7f4e; }
+    .msg.err { color:var(--red); }
+    .hint { font-size:12px; color:var(--muted); line-height:1.45; }
+    .tabs { display:flex; gap:8px; margin:0 0 14px; }
+    .tabs button {
+      width:auto; flex:1; background:#fff; color:var(--navy); border:1px solid #c9d3e0;
+      padding:10px 12px; font-size:13px;
+    }
+    .tabs button.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .team-head, .team-row {
+      display:grid;
+      grid-template-columns: minmax(140px,1.4fr) minmax(100px,1fr) 88px 96px 56px 120px 120px 52px;
+      gap:10px;
+      align-items:center;
+    }
+    .team-head {
+      margin:0 0 8px; padding:0 4px;
+      font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);
+    }
+    .team-row {
+      padding:12px; margin-bottom:8px; border:1px solid var(--line); border-radius:12px; background:#fbfcfe;
+    }
+    .team-row input[type=text],
+    .team-row input[type=date],
+    .team-row input[type=number],
+    .team-row select {
+      width:100%; margin:0; padding:10px 12px; border-radius:10px; border:1px solid #c9d3e0;
+      background:#fff; font:inherit; font-size:13px; font-weight:600; color:var(--navy);
+    }
+    .team-row .on {
+      display:flex; justify-content:center; align-items:center;
+    }
+    .team-row .on input { width:18px; height:18px; accent-color:var(--navy); }
+    .team-onec {
+      grid-column:1 / -1;
+      display:grid; grid-template-columns: 120px 1fr; gap:8px 10px; align-items:center;
+    }
+    .team-onec label {
+      font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);
+    }
+    .team-onec input {
+      width:100%; margin:0; padding:10px 12px; border-radius:10px; border:1px solid #c9d3e0;
+      background:#fff; font:inherit; font-size:13px; font-weight:600; color:var(--navy);
+    }
+    .team-b24 {
+      grid-column:1 / -1; font-size:11px; color:var(--muted); line-height:1.4;
+      padding:6px 8px; background:#eef2f7; border-radius:8px;
+    }
+    .team-b24 b { color:var(--navy); }
+    @media (max-width:900px) {
+      .team-head { display:none; }
+      .team-row {
+        grid-template-columns:1fr 1fr;
+        gap:8px 10px;
+      }
+      .team-row > *:nth-child(1),
+      .team-row > *:nth-child(2) { grid-column: span 2; }
+      .team-onec { grid-column:1 / -1; grid-template-columns:1fr; }
+      .team-b24 { grid-column:1 / -1; }
+    }
+    .panel { display:none; }
+    .panel.active { display:block; }
+    #gate { display:block; }
+    #app { display:none; }
+    .topnav { display:flex; justify-content:flex-end; gap:14px; margin:0 0 10px; }
+    .to-analytics {
+      font-size:12px; font-weight:700; color:var(--muted); text-decoration:none;
+    }
+    .to-analytics:hover { color:var(--navy); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topnav">
+      <a class="to-analytics" href="https://141-105-71-134.sslip.io/">Main</a>
+      <a class="to-analytics" href="https://141-105-71-134.sslip.io/jGauTnQDLLRc3j/">← К аналитике</a>
+    </div>
+    <h1>Ввод данных МОП</h1>
+    <p class="sub">Планы на месяц и состав команды (даты найма/увольнения). Один справочник — планы и аналитика подхватывают сами.</p>
+
+    <div class="card" id="gate">
+      <div class="field-label">Пароль</div>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      <button type="button" id="unlock">Войти</button>
+      <div class="msg" id="gate-msg"></div>
+    </div>
+
+    <div id="app">
+      <div class="tabs">
+        <button type="button" class="active" data-tab="plans">Планы</button>
+        <button type="button" data-tab="team">Состав команды</button>
+      </div>
+
+      <div class="panel active" id="panel-plans">
+        <div class="card">
+          <div class="field-label">Месяц</div>
+          <input id="month" type="month" />
+          <button type="button" class="secondary" id="reload">Загрузить месяц</button>
+          <div class="meta" id="meta">—</div>
+          <div id="sections"></div>
+          <button type="button" id="save">Сохранить планы</button>
+          <div class="msg" id="msg"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-team">
+        <div class="card">
+          <p class="hint" style="margin-top:0">
+            Ручные даты «с / по» всегда можно задать здесь (старые учётки).
+            Тумблер <b>Б24</b> — брать даты из Битрикс: приём из поля «Дата принятия на работу»;
+            увольнение только если учётка <b>неактивна</b> и заполнено «Дата уволнения».
+            Поле <b>1С</b> — ФИО менеджера из xlsx (несколько вариантов через запятую).
+            Технически выключить дубль — снять «вкл».
+          </p>
+          <div class="team-head">
+            <div>Имя</div><div>Ключ РНП</div><div>Роль</div><div>Bitrix ID</div>
+            <div>Б24</div><div>С</div><div>По</div><div>Вкл</div>
+          </div>
+          <div id="team-body"></div>
+          <button type="button" class="secondary" id="team-add" style="margin-top:12px">+ Добавить сотрудника</button>
+          <button type="button" id="team-save">Сохранить состав</button>
+          <div class="msg" id="team-msg"></div>
+        </div>
+      </div>
+
+      <div class="card hint">
+        Форма на GitHub Pages шлёт данные на VPS (<code>/p</code>).
+        Состав пишется в <code>config/analytics.yaml</code>; планы — в <code>data/warehouse/plans/</code>.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SALT_B64 = '76p5oPq1BDGfV0HRKTAQkw==';
+    const IV_B64 = 'sl91RQXghjC+kFA+';
+    const DATA_B64 = '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';
+    const ITERATIONS = 50000;
+    const SECTIONS = [{"title": "KPI 0. Выручка", "metrics": [{"key": "revenue", "label": "Выручка по реализациям, ₽", "kind": "money"}]}, {"title": "KPI 1. Сделки / УПД", "metrics": [{"key": "deals_cnt", "label": "Сделки, шт", "kind": "num"}, {"key": "deals_sum", "label": "Сделки, ₽", "kind": "money"}, {"key": "upd", "label": "УПД, шт", "kind": "num"}]}, {"title": "KPI 1.1. Запрос на поставку", "metrics": [{"key": "supply_cnt", "label": "Запросы созданные, шт", "kind": "num"}, {"key": "supply_sum", "label": "Запросы сумма, ₽", "kind": "money"}]}, {"title": "KPI 2–3. Счета", "metrics": [{"key": "invoices_cnt", "label": "Счета выст., шт", "kind": "num"}, {"key": "invoices_paid_cnt", "label": "Счета опл., шт", "kind": "num"}, {"key": "invoices_sum", "label": "Счета выст., ₽", "kind": "money"}, {"key": "invoices_paid_sum", "label": "Счета опл., ₽", "kind": "money"}]}, {"title": "KPI 4. Лиды", "metrics": [{"key": "leads", "label": "Лиды созданные, шт", "kind": "num"}, {"key": "leads_converted", "label": "Лиды сконвертир., шт", "kind": "num"}]}, {"title": "KPI 5. Договоры", "metrics": [{"key": "contracts_init", "label": "Договоры сформир., шт", "kind": "num"}, {"key": "contracts_signed", "label": "Договоры подп., шт", "kind": "num"}]}, {"title": "KPI 6. Звонки", "metrics": [{"key": "calls", "label": "Звонки, шт", "kind": "num"}, {"key": "calls_30", "label": "Звонки 30–60с, шт", "kind": "num"}, {"key": "calls_60", "label": "Звонки >60с, шт", "kind": "num"}, {"key": "talk_time_sec", "label": "Время на линии, сек (месяц)", "kind": "num"}]}, {"title": "KPI 7. Коммуникации мессенджеры", "metrics": [{"key": "wazzup_msg", "label": "Мессенджеры сообщения, шт", "kind": "num"}, {"key": "wazzup_dlg", "label": "Мессенджеры диалоги, шт", "kind": "num"}]}, {"title": "KPI 8. Email", "metrics": [{"key": "email_in", "label": "Email вх., шт", "kind": "num"}, {"key": "email_out", "label": "Email исх., шт", "kind": "num"}]}];
+    let CFG = null;
+    let NW = new Set();
+    let PASS = "";
+    let LIVE_MANAGERS = [];
+    let TEAM_ROWS = [];
+    const REMEMBER_DAYS = 7;
+    const PW_COOKIE = "rtl_manage_pw";
+
+    function setPwCookie(pw) {
+      const maxAge = REMEMBER_DAYS * 24 * 60 * 60;
+      const secure = location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = PW_COOKIE + "=" + encodeURIComponent(pw)
+        + "; Max-Age=" + maxAge + "; Path=/; SameSite=Lax" + secure;
+    }
+    function getPwCookie() {
+      const parts = document.cookie.split(";");
+      for (const raw of parts) {
+        const p = raw.trim();
+        if (p.startsWith(PW_COOKIE + "=")) return decodeURIComponent(p.slice(PW_COOKIE.length + 1));
+      }
+      return "";
+    }
+    function clearPwCookie() {
+      document.cookie = PW_COOKIE + "=; Max-Age=0; Path=/; SameSite=Lax";
+    }
+
+    const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+    async function deriveKey(password, salt) {
+      const enc = new TextEncoder();
+      const base = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+      return crypto.subtle.deriveKey(
+        { name:"PBKDF2", salt, iterations:ITERATIONS, hash:"SHA-256" },
+        base,
+        { name:"AES-GCM", length:256 },
+        false,
+        ["decrypt"]
+      );
+    }
+
+    function workDays(ym) {
+      const parts = ym.split("-");
+      const y = +parts[0], m = +parts[1];
+      if (!y || !m) return 0;
+      let n = 0;
+      const d = new Date(Date.UTC(y, m - 1, 1));
+      while (d.getUTCMonth() === m - 1) {
+        const iso = d.toISOString().slice(0, 10);
+        if (!NW.has(iso)) n += 1;
+        d.setUTCDate(d.getUTCDate() + 1);
+      }
+      return n;
+    }
+
+    function show(el, text, ok) {
+      el.textContent = text;
+      el.className = "msg show " + (ok ? "ok" : "err");
+    }
+
+    function allMetricKeys() {
+      const keys = [];
+      SECTIONS.forEach(s => s.metrics.forEach(m => keys.push(m.key)));
+      return keys;
+    }
+
+    function normalizePlan(raw) {
+      const metrics = {};
+      const undef = new Set();
+      allMetricKeys().forEach(k => { metrics[k] = {}; });
+
+      if (raw && raw.metrics && typeof raw.metrics === "object") {
+        Object.keys(raw.metrics).forEach(k => {
+          metrics[k] = Object.assign({}, raw.metrics[k] || {});
+        });
+      }
+      // legacy
+      if (raw && raw.revenue_plan) {
+        metrics.revenue = Object.assign(metrics.revenue || {}, raw.revenue_plan);
+      }
+      if (CFG && CFG.yaml_fallback && (!raw || !raw.metrics) && !raw?.revenue_plan) {
+        metrics.revenue = Object.assign({}, CFG.yaml_fallback);
+      } else if (CFG && CFG.yaml_fallback && Object.keys(metrics.revenue || {}).length === 0) {
+        metrics.revenue = Object.assign({}, CFG.yaml_fallback);
+      }
+
+      const listed = Array.isArray(raw && raw.undefined_metrics) ? raw.undefined_metrics : null;
+      if (listed) {
+        listed.forEach(k => undef.add(k));
+      } else {
+        // новый месяц: всё кроме выручки — «не определён», пока не задали
+        allMetricKeys().forEach(k => {
+          if (k === "revenue") return;
+          const vals = Object.values(metrics[k] || {});
+          const has = vals.some(v => v != null && v !== "");
+          if (!has) undef.add(k);
+        });
+      }
+      return { metrics, undefined_metrics: [...undef] };
+    }
+
+    function renderForm(state) {
+      const host = document.getElementById("sections");
+      host.innerHTML = "";
+      const undef = new Set(state.undefined_metrics || []);
+      SECTIONS.forEach(sec => {
+        const box = document.createElement("div");
+        box.className = "sec";
+        box.innerHTML = "<h3>" + sec.title + "</h3>";
+        sec.metrics.forEach(m => {
+          const isUndef = undef.has(m.key);
+          const block = document.createElement("div");
+          block.className = "metric" + (isUndef ? " undef" : "");
+          block.dataset.key = m.key;
+          const head = document.createElement("div");
+          head.className = "metric-head";
+          head.innerHTML =
+            '<div class="lab">' + m.label + '</div>' +
+            '<label class="chk"><input type="checkbox" data-undef="' + m.key + '"' +
+            (isUndef ? " checked" : "") + ' /> План не определён</label>';
+          block.appendChild(head);
+          const mgrs = document.createElement("div");
+          mgrs.className = "mgrs";
+          (LIVE_MANAGERS.length ? LIVE_MANAGERS : (CFG.managers || [])).forEach(mgr => {
+            const key = mgr.rnp_key;
+            const row = document.createElement("div");
+            row.className = "mgr";
+            const val = (state.metrics[m.key] || {})[key];
+            row.innerHTML =
+              '<div class="name">' + key + '</div>' +
+              '<input type="number" min="0" step="' + (m.kind === "money" ? "1000" : "1") +
+              '" data-metric="' + m.key + '" data-mgr="' + key + '" value="' +
+              (val == null || val === "" ? "" : val) + '"' +
+              (isUndef ? " disabled" : "") + " />";
+            mgrs.appendChild(row);
+          });
+          block.appendChild(mgrs);
+          box.appendChild(block);
+        });
+        host.appendChild(box);
+      });
+
+      host.querySelectorAll("input[data-undef]").forEach(chk => {
+        chk.addEventListener("change", () => {
+          const key = chk.getAttribute("data-undef");
+          const block = host.querySelector('.metric[data-key="' + key + '"]');
+          const on = chk.checked;
+          if (block) block.classList.toggle("undef", on);
+          host.querySelectorAll('input[data-metric="' + key + '"]').forEach(inp => {
+            inp.disabled = on;
+          });
+        });
+      });
+    }
+
+    function collectState() {
+      const metrics = {};
+      const undefined_metrics = [];
+      allMetricKeys().forEach(k => { metrics[k] = {}; });
+      document.querySelectorAll("input[data-undef]").forEach(chk => {
+        if (chk.checked) undefined_metrics.push(chk.getAttribute("data-undef"));
+      });
+      const undef = new Set(undefined_metrics);
+      document.querySelectorAll("input[data-metric]").forEach(inp => {
+        const mk = inp.dataset.metric;
+        const mgr = inp.dataset.mgr;
+        if (undef.has(mk)) return;
+        if (inp.value === "") return;
+        metrics[mk][mgr] = Number(inp.value);
+      });
+      // убрать пустые объекты метрик
+      Object.keys(metrics).forEach(k => {
+        if (!Object.keys(metrics[k]).length) delete metrics[k];
+      });
+      return { metrics, undefined_metrics };
+    }
+
+    function ghHeaders() {
+      return {
+        "Authorization": "Bearer " + CFG.token,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+      };
+    }
+
+    function decodeGitContent(b64text) {
+      const clean = String(b64text || "").replace(/\s/g, "");
+      const bin = atob(clean);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+
+    async function unlock(password) {
+      const key = await deriveKey(password, b64(SALT_B64));
+      const plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(IV_B64) }, key, b64(DATA_B64));
+      CFG = JSON.parse(new TextDecoder().decode(plain));
+      if (!CFG) throw new Error("bad config");
+      if (CFG.api) {
+        /* local / VPS hub */
+      } else if (!CFG.token || !CFG.repo) {
+        throw new Error("bad config");
+      }
+      PASS = password;
+      setPwCookie(password);
+      NW = new Set(CFG.non_working_dates || []);
+      LIVE_MANAGERS = CFG.managers || [];
+      const now = new Date();
+      const ym = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+      document.getElementById("month").value = ym;
+      document.getElementById("gate").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      if (CFG.api) {
+        try {
+          const br = await fetch(CFG.api.replace(/\/$/, "") + "/api/bootstrap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: PASS })
+          });
+          const bj = await br.json().catch(() => ({}));
+          if (br.ok) {
+            if (bj.default_month) document.getElementById("month").value = bj.default_month;
+            if (Array.isArray(bj.managers) && bj.managers.length) {
+              LIVE_MANAGERS = bj.managers;
+              CFG.managers = bj.managers;
+            }
+            if (Array.isArray(bj.team)) {
+              TEAM_ROWS = bj.team;
+              renderTeam();
+            }
+          }
+        } catch (e) { /* month load will surface errors */ }
+      }
+      await loadMonth();
+      await openTabFromHash();
+    }
+
+    async function loadMonth() {
+      const msg = document.getElementById("msg");
+      const btn = document.getElementById("reload");
+      msg.className = "msg";
+      if (!CFG) { show(msg, "Сначала введите пароль", false); return; }
+      const ym = document.getElementById("month").value;
+      if (!ym) { show(msg, "Выберите месяц", false); return; }
+      const wd = workDays(ym);
+      let raw = null;
+      let source = "new";
+      let updated = "—";
+      btn.disabled = true;
+      const prevLabel = btn.textContent;
+      btn.textContent = "Загрузка…";
+      try {
+        if (CFG.api) {
+          const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/month", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: PASS, month: ym })
+          });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
+          if (Array.isArray(j.managers) && j.managers.length) {
+            LIVE_MANAGERS = j.managers;
+            CFG.managers = j.managers;
+          }
+          raw = {
+            metrics: j.metrics || {},
+            undefined_metrics: j.undefined_metrics || [],
+            revenue_plan: j.revenue_plan || {},
+            updated_at: j.updated_at
+          };
+          source = j.file_exists ? "file" : "new";
+          updated = j.updated_at || "—";
+        } else {
+          const path = "data/warehouse/plans/" + ym + ".json";
+          const r = await fetch(
+            "https://api.github.com/repos/" + CFG.repo + "/contents/" + path + "?ref=" + encodeURIComponent(CFG.branch || "main"),
+            { headers: ghHeaders() }
+          );
+          if (r.status === 200) {
+            const j = await r.json();
+            const text = decodeGitContent(j.content);
+            raw = JSON.parse(text);
+            source = "file";
+            updated = raw.updated_at || "файл есть";
+          } else if (r.status === 404) {
+            source = "new";
+          } else {
+            const j = await r.json().catch(() => ({}));
+            throw new Error(j.message || ("GitHub " + r.status));
+          }
+        }
+        const state = normalizePlan(raw);
+        document.getElementById("meta").innerHTML =
+          "<span>Рабочих дней: <strong>" + wd + "</strong></span>" +
+          "<span>Источник: <strong>" + source + "</strong></span>" +
+          "<span>Обновлено: <strong>" + updated + "</strong></span>";
+        renderForm(state);
+        show(msg, source === "file"
+          ? ("Месяц " + ym + " загружен")
+          : ("Месяц " + ym + " — файла ещё нет, показан черновик"), true);
+      } catch (e) {
+        const m = String(e.message || e);
+        show(msg, m.includes("Failed to fetch")
+          ? "Сервер не отвечает. Проверьте VPS API / сеть."
+          : m, false);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prevLabel || "Загрузить месяц";
+      }
+    }
+
+    document.getElementById("unlock").onclick = async () => {
+      const el = document.getElementById("gate-msg");
+      el.className = "msg";
+      try {
+        await unlock(document.getElementById("password").value);
+      } catch (e) {
+        clearPwCookie();
+        show(el, "Неверный пароль", false);
+      }
+    };
+    document.getElementById("password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("unlock").click();
+    });
+
+    (async () => {
+      const saved = getPwCookie();
+      if (!saved) return;
+      try {
+        await unlock(saved);
+      } catch (e) {
+        clearPwCookie();
+      }
+    })();
+    document.getElementById("reload").addEventListener("click", (e) => {
+      e.preventDefault();
+      loadMonth();
+    });
+    document.getElementById("month").addEventListener("change", () => loadMonth());
+
+    document.querySelectorAll(".tabs button").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.getAttribute("data-tab");
+        document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+        document.getElementById("panel-" + tab).classList.add("active");
+        if (tab === "team") {
+          try { history.replaceState(null, "", "#team"); } catch (e) {}
+        } else {
+          try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+        }
+        if (tab === "team" && CFG && CFG.api) {
+          try {
+            const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/team", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password: PASS })
+            });
+            const j = await r.json().catch(() => ({}));
+            if (r.ok && Array.isArray(j.team)) {
+              TEAM_ROWS = j.team;
+              renderTeam();
+            }
+          } catch (e) {}
+        }
+      });
+    });
+
+    async function openTabFromHash() {
+      if ((location.hash || "").replace(/^#/, "") !== "team") return;
+      const btn = document.querySelector('.tabs button[data-tab="team"]');
+      if (btn) btn.click();
+    }
+
+    function onecNamesText(t) {
+      const arr = Array.isArray(t.onec_names) ? t.onec_names : [];
+      return arr.join(", ");
+    }
+
+    function parseOnecNames(raw) {
+      if (Array.isArray(raw)) return raw.map(s => String(s || "").trim()).filter(Boolean);
+      return String(raw || "").split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+    }
+
+    function teamB24Hint(t) {
+      const act = t.bitrix_active;
+      const hire = t.bitrix_hire || "—";
+      const fire = t.bitrix_fire || "—";
+      const conf = t.bitrix_fire_confirmed;
+      let status = "нет данных dim_users";
+      if (act === true) status = "ACTIVE=да";
+      else if (act === false) status = "ACTIVE=нет";
+      const fireNote = conf
+        ? ("увольнение подтверждено → " + (t.employment_to || fire))
+        : (act === false && !t.bitrix_fire
+          ? "ACTIVE=нет, но дата увольнения в Б24 пуста — в аналитике ещё «работает»"
+          : (t.bitrix_fire && act !== false
+            ? "дата увольнения есть, но ACTIVE ещё да — не считаем уволенным"
+            : "увольнения нет"));
+      const mode = t.use_bitrix_employment ? "режим Б24" : "ручной режим";
+      const eff = "эффективно: с " + (t.employment_from || "—") + " по " + (t.employment_to || "∞");
+      return mode + " · Б24 приём " + hire + " · Б24 увольн. " + fire + " · " + status + " · " + fireNote + " · " + eff;
+    }
+
+    function renderTeam() {
+      const body = document.getElementById("team-body");
+      body.innerHTML = "";
+      (TEAM_ROWS || []).forEach((t, idx) => {
+        const row = document.createElement("div");
+        row.className = "team-row";
+        const fromManual = t.employment_from_manual != null ? t.employment_from_manual : (t.employment_from || "");
+        const toManual = t.employment_to_manual != null ? t.employment_to_manual : (t.employment_to || "");
+        row.innerHTML =
+          '<input type="text" data-f="name" data-i="' + idx + '" value="' + (t.name || "") + '" />' +
+          '<input type="text" data-f="rnp_key" data-i="' + idx + '" value="' + (t.rnp_key || "") + '" />' +
+          '<select data-f="role" data-i="' + idx + '">' +
+            '<option value="mop"' + (t.role === "mop" ? " selected" : "") + '>mop</option>' +
+            '<option value="head"' + (t.role === "head" ? " selected" : "") + '>head</option>' +
+          '</select>' +
+          '<input type="number" data-f="bitrix_id" data-i="' + idx + '" value="' + (t.bitrix_id || "") + '" />' +
+          '<div class="on" title="Даты из Битрикс24"><input type="checkbox" data-f="use_bitrix_employment" data-i="' + idx + '"' + (t.use_bitrix_employment ? " checked" : "") + ' /></div>' +
+          '<input type="date" data-f="employment_from" data-i="' + idx + '" value="' + (fromManual || "") + '" title="Ручная дата приёма" />' +
+          '<input type="date" data-f="employment_to" data-i="' + idx + '" value="' + (toManual || "") + '" title="Ручная дата увольнения" />' +
+          '<div class="on"><input type="checkbox" data-f="enabled" data-i="' + idx + '"' + (t.enabled === false ? "" : " checked") + ' /></div>' +
+          '<div class="team-onec">' +
+            '<label for="team-onec-' + idx + '">1С (xlsx)</label>' +
+            '<input id="team-onec-' + idx + '" type="text" data-f="onec_names" data-i="' + idx + '" value="' + onecNamesText(t).replace(/"/g, "&quot;") + '" placeholder="Как в колонке менеджера: Фамилия Имя, второй вариант…" />' +
+          '</div>' +
+          '<div class="team-b24">' + teamB24Hint(t) + '</div>';
+        body.appendChild(row);
+      });
+    }
+
+    function collectTeam() {
+      const rows = JSON.parse(JSON.stringify(TEAM_ROWS || []));
+      document.querySelectorAll("#team-body [data-f]").forEach(el => {
+        const i = +el.getAttribute("data-i");
+        const f = el.getAttribute("data-f");
+        if (!rows[i]) return;
+        if (f === "enabled" || f === "use_bitrix_employment") rows[i][f] = el.checked;
+        else if (f === "bitrix_id") rows[i][f] = Number(el.value || 0);
+        else if (f === "onec_names") rows[i][f] = parseOnecNames(el.value || "");
+        else rows[i][f] = el.value || null;
+      });
+      return rows;
+    }
+
+    document.getElementById("team-add").onclick = () => {
+      TEAM_ROWS = collectTeam();
+      TEAM_ROWS.push({
+        bitrix_id: 0, name: "", rnp_key: "", role: "mop",
+        enabled: true, use_bitrix_employment: true,
+        employment_from: "", employment_to: null,
+        employment_from_manual: "", employment_to_manual: null,
+        aliases: [], onec_names: []
+      });
+      renderTeam();
+    };
+
+    document.getElementById("team-save").onclick = async () => {
+      const msg = document.getElementById("team-msg");
+      msg.className = "msg";
+      if (!CFG || !CFG.api) { show(msg, "Состав команды сохраняется только через VPS API", false); return; }
+      const team = collectTeam();
+      const btn = document.getElementById("team-save");
+      btn.disabled = true; btn.textContent = "Сохранение…";
+      try {
+        const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/team/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: PASS, team, rebuild: true })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
+        TEAM_ROWS = j.team || team;
+        renderTeam();
+        await loadMonth();
+        show(msg, "Состав сохранён. Аналитика пересобрана." + (j.rebuild_ok === false ? "\nRebuild: " + (j.rebuild_error || "") : ""), true);
+      } catch (e) {
+        show(msg, String(e.message || e), false);
+      } finally {
+        btn.disabled = false; btn.textContent = "Сохранить состав";
+      }
+    };
+
+    document.getElementById("save").onclick = async () => {
+      const msg = document.getElementById("msg");
+      msg.className = "msg";
+      if (!CFG) { show(msg, "Сначала введите пароль", false); return; }
+      const ym = document.getElementById("month").value;
+      if (!ym) { show(msg, "Выберите месяц", false); return; }
+      const state = collectState();
+      const payload = {
+        month: ym,
+        work_days: workDays(ym),
+        updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+        source: CFG.api ? "plans_pages_local" : "plans_pages",
+        undefined_metrics: state.undefined_metrics,
+        metrics: state.metrics,
+        revenue_plan: state.metrics.revenue || {}
+      };
+      const btn = document.getElementById("save");
+      btn.disabled = true; btn.textContent = "Сохранение…";
+      try {
+        if (CFG.api) {
+          const r = await fetch(CFG.api.replace(/\/$/, "") + "/api/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              password: PASS,
+              month: ym,
+              metrics: state.metrics,
+              undefined_metrics: state.undefined_metrics,
+              revenue_plan: state.metrics.revenue || {},
+              rebuild: true
+            })
+          });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(j.detail || j.message || ("HTTP " + r.status));
+          const pub = j.pipeline && j.pipeline.published ? "Витрина опубликована." : "";
+          show(msg, "Готово на сервере:\n" + (j.path || "") + "\n" + pub, true);
+        } else {
+          const path = "data/warehouse/plans/" + ym + ".json";
+          const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2) + "\n")));
+          let sha = null;
+          const get = await fetch(
+            "https://api.github.com/repos/" + CFG.repo + "/contents/" + path + "?ref=" + encodeURIComponent(CFG.branch || "main"),
+            { headers: ghHeaders() }
+          );
+          if (get.status === 200) {
+            const gj = await get.json();
+            sha = gj.sha;
+          } else if (get.status !== 404) {
+            const gj = await get.json().catch(() => ({}));
+            throw new Error(gj.message || ("GitHub GET " + get.status));
+          }
+          const body = {
+            message: "plans: " + ym,
+            content,
+            branch: CFG.branch || "main"
+          };
+          if (sha) body.sha = sha;
+          const r = await fetch("https://api.github.com/repos/" + CFG.repo + "/contents/" + path, {
+            method: "PUT",
+            headers: ghHeaders(),
+            body: JSON.stringify(body)
+          });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(j.message || ("GitHub " + r.status));
+          show(msg, "Готово:\n" + path + "\nЧерез пару минут РНП пересоберётся.", true);
+        }
+        await loadMonth();
+      } catch (e) {
+        const m = String(e.message || e);
+        show(msg, m.includes("Failed to fetch")
+          ? "Сервер не отвечает. Проверьте VPS API / сеть."
+          : m, false);
+      } finally {
+        btn.disabled = false; btn.textContent = "Сохранить";
+      }
+    };
+  </script>
+</body>
+</html>

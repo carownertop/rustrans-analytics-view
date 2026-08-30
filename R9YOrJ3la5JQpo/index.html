@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Управление · Rustrans</title>
+  <link rel="icon" href="https://141-105-71-134.sslip.io/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="https://141-105-71-134.sslip.io/favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="https://141-105-71-134.sslip.io/apple-touch-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { --navy:#0b1c33; --red:#e30613; --muted:#5b6b7c; --line:#d9e0ea; }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; font-family:Montserrat,system-ui,sans-serif; color:var(--navy);
+      background:
+        radial-gradient(900px 420px at 12% -10%, rgba(227,6,19,.10), transparent 55%),
+        linear-gradient(165deg, #f7f9fc, #e8eef6 55%, #f3f6fa);
+      padding:28px 16px;
+    }
+    .wrap { width:min(560px,100%); margin:0 auto; }
+    h1 { margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:-.03em; }
+    .sub { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.45; }
+    .card {
+      background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px;
+      box-shadow:0 16px 40px rgba(11,28,51,.06); margin-bottom:14px;
+    }
+    .field-label {
+      display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.04em; color:var(--muted); margin:0 0 6px;
+    }
+    input[type=password], button { font:inherit; }
+    input[type=password] {
+      width:100%; border:1px solid #c9d3e0; border-radius:12px; padding:12px 14px;
+      margin-bottom:12px; background:#fbfcfe; font-weight:600;
+    }
+    button.unlock {
+      width:100%; border:0; border-radius:12px; padding:13px 18px;
+      background:var(--navy); color:#fff; font-weight:700; cursor:pointer;
+    }
+    .msg { margin-top:12px; font-size:13px; font-weight:600; display:none; white-space:pre-wrap; }
+    .msg.show { display:block; }
+    .msg.err { color:var(--red); }
+    #gate { display:block; }
+    #app { display:none; }
+    .links { display:flex; flex-direction:column; gap:10px; }
+    .links a {
+      display:block; text-decoration:none; color:var(--navy);
+      border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+      background:#fbfcfe; transition:border-color .15s, background .15s;
+    }
+    .links a:hover { border-color:#aeb9c8; background:#fff; }
+    .links .t { font-size:15px; font-weight:800; letter-spacing:-.02em; }
+    .links .d { margin-top:4px; font-size:12px; color:var(--muted); line-height:1.4; }
+    .back {
+      display:inline-block; margin-top:8px; font-size:12px; font-weight:700;
+      color:var(--muted); text-decoration:none;
+    }
+    .back:hover { color:var(--navy); }
+    .topnav { display:flex; justify-content:flex-end; gap:14px; margin:0 0 10px; }
+    .to-analytics {
+      font-size:12px; font-weight:700; color:var(--muted); text-decoration:none;
+    }
+    .to-analytics:hover { color:var(--navy); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topnav">
+      <a class="to-analytics" href="https://141-105-71-134.sslip.io/">Main</a>
+      <a class="to-analytics" href="https://141-105-71-134.sslip.io/jGauTnQDLLRc3j/">← К аналитике</a>
+    </div>
+    <h1>Управление</h1>
+    <p class="sub">Планы, состав команды и загрузка выгрузок 1С. Отдельный пароль от аналитики.</p>
+
+    <div class="card" id="gate">
+      <div class="field-label">Пароль</div>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      <button type="button" class="unlock" id="unlock">Войти</button>
+      <div class="msg" id="gate-msg"></div>
+    </div>
+
+    <div id="app">
+      <div class="card">
+        <div class="links">
+          <a href="https://141-105-71-134.sslip.io/qtvMkYSv6sTIUG/">
+            <div class="t">Планы / факт</div>
+            <div class="d">Месячные планы по метрикам РНП для менеджеров.</div>
+          </a>
+          <a href="https://141-105-71-134.sslip.io/qtvMkYSv6sTIUG/#team">
+            <div class="t">Менеджеры / состав команды</div>
+            <div class="d">Приём, увольнение, роли и даты работы в аналитике.</div>
+          </a>
+          <a href="https://141-105-71-134.sslip.io/vGBEWQh9GVA4Vk/">
+            <div class="t">Загрузка 1С</div>
+            <div class="d">Выгрузки реализаций и оплат (.xlsx) на сервер.</div>
+          </a>
+        </div>
+        <a class="back" href="https://141-105-71-134.sslip.io/jGauTnQDLLRc3j/">← К аналитике</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SALT_B64 = 'UV1n4s/ozh9ITlMavinW1g==';
+    const IV_B64 = 'S791QfUYMdqJbkFA';
+    const DATA_B64 = 'nxSQ0kbRumeggaR/gJUkG/Jach6XAr4PcKo9TmYL3WvdPfg6auT2PzzHwzaciA==';
+    const ITERATIONS = 50000;
+    const REMEMBER_DAYS = 7;
+    const PW_COOKIE = "rtl_manage_pw";
+
+    function setPwCookie(pw) {
+      const maxAge = REMEMBER_DAYS * 24 * 60 * 60;
+      const secure = location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = PW_COOKIE + "=" + encodeURIComponent(pw)
+        + "; Max-Age=" + maxAge + "; Path=/; SameSite=Lax" + secure;
+    }
+    function getPwCookie() {
+      const parts = document.cookie.split(";");
+      for (const raw of parts) {
+        const p = raw.trim();
+        if (p.startsWith(PW_COOKIE + "=")) return decodeURIComponent(p.slice(PW_COOKIE.length + 1));
+      }
+      return "";
+    }
+    function clearPwCookie() {
+      document.cookie = PW_COOKIE + "=; Max-Age=0; Path=/; SameSite=Lax";
+    }
+
+    const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+    async function deriveKey(password, salt) {
+      const enc = new TextEncoder();
+      const base = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+      return crypto.subtle.deriveKey(
+        { name:"PBKDF2", salt, iterations:ITERATIONS, hash:"SHA-256" },
+        base,
+        { name:"AES-GCM", length:256 },
+        false,
+        ["decrypt"]
+      );
+    }
+
+    async function unlock(password) {
+      const key = await deriveKey(password, b64(SALT_B64));
+      const plain = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(IV_B64) }, key, b64(DATA_B64));
+      const cfg = JSON.parse(new TextDecoder().decode(plain));
+      if (!cfg || cfg.ok !== true) throw new Error("bad config");
+      setPwCookie(password);
+      document.getElementById("gate").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    }
+
+    function show(el, text) {
+      el.textContent = text;
+      el.className = "msg show err";
+    }
+
+    document.getElementById("unlock").onclick = async () => {
+      const el = document.getElementById("gate-msg");
+      el.className = "msg";
+      try {
+        await unlock(document.getElementById("password").value);
+      } catch (e) {
+        clearPwCookie();
+        show(el, "Неверный пароль");
+      }
+    };
+    document.getElementById("password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("unlock").click();
+    });
+
+    (async () => {
+      const saved = getPwCookie();
+      if (!saved) return;
+      try { await unlock(saved); } catch (e) { clearPwCookie(); }
+    })();
+  </script>
+</body>
+</html>
