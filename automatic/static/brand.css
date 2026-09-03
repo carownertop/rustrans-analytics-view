@@ -27,6 +27,7 @@ a { color: inherit; }
 button, input, select { font: inherit; }
 
 .head {
+  position: relative;
   background: var(--navy);
   color: #fff;
   padding: 12px 0 10px;
@@ -710,6 +711,35 @@ table.flat td:first-child {
 table.flat th:first-child { z-index: 3; }
 table.flat tbody tr:nth-child(odd) td:first-child { background: #f4f7fb; }
 table.flat tbody tr:nth-child(even) td:first-child { background: #fff; }
+.dept-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 720px;
+}
+.dept-kpi { cursor: default; }
+.dept-kpi:hover { box-shadow: none; border-color: var(--line); }
+.dept-h {
+  margin: 18px 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.dept-table-wrap {
+  overflow: auto;
+  max-height: 360px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.dept-table-wrap .hint { padding: 10px 12px; }
+.dept-table-wrap table.flat td.num,
+.dept-table-wrap table.flat th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.dept-table-wrap table.flat td.wrap {
+  white-space: normal;
+  max-width: 280px;
+}
+#dept-layers { max-height: none; }
+#dept-xlsx { width: auto; min-width: 180px; }
 .more { margin-top: 10px; width: auto; padding: 10px 14px; }
 .rtl-gate {
   position: fixed;
@@ -1339,6 +1369,7 @@ body.cov-resizing {
 @media (max-width: 720px) {
   .cov-picker-grid { grid-template-columns: 1fr; }
   .cov-summary { grid-template-columns: 1fr 1fr; }
+  .dept-summary { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
   .head-top { flex-direction: column; }

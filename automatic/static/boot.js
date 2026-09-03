@@ -52,6 +52,10 @@
     return h;
   }
 
+  function fetchOpts(extra) {
+    return Object.assign({ credentials: "include" }, extra || {});
+  }
+
   function gateCard() {
     let el = document.getElementById("rtl-gate");
     if (el) return el;
@@ -70,11 +74,50 @@
     return el;
   }
 
+  async function hubSession() {
+    try {
+      const r = await fetch("/auth/me", { credentials: "include" });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function blockHubUserWithoutAccess() {
+    const u = await hubSession();
+    if (!u) return false;
+    if ((u.services || []).indexOf("automatic") >= 0) return false;
+    window.RTL_HUB_BLOCKED = true;
+    return true;
+  }
+
+  async function hubAllowed() {
+    const u = await hubSession();
+    if (!u) return false;
+    return (u.services || []).indexOf("automatic") >= 0;
+  }
+
+  async function hubDenied() {
+    const u = await hubSession();
+    if (!u) return false;
+    return (u.services || []).indexOf("automatic") < 0;
+  }
+
+  async function waitHubGate() {
+    for (let i = 0; i < 300; i += 1) {
+      if (!document.documentElement.classList.contains("rtl-auth-lock")) return true;
+      if (document.querySelector(".rtl-auth-overlay")) return false;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return !document.documentElement.classList.contains("rtl-auth-lock");
+  }
+
   async function probe(password) {
     try {
-      const res = await fetch(url("api/state"), {
-        headers: password ? { Authorization: basic(password) } : {},
-      });
+      const opts = { credentials: "include" };
+      if (password) opts.headers = { Authorization: basic(password) };
+      const res = await fetch(url("api/state"), opts);
       return res.ok;
     } catch (err) {
       return false;
@@ -83,9 +126,22 @@
 
   let unlocking = null;
   function unlock() {
+    if (window.RTL_HUB_BLOCKED) return Promise.resolve();
     if (!API) return Promise.resolve();
     if (unlocking) return unlocking;
     unlocking = (async () => {
+      if (await blockHubUserWithoutAccess()) return;
+      const hasHubAuth = !!document.querySelector('script[src*="rtl_auth.js"]');
+      if (hasHubAuth) {
+        if (await probe("")) return;
+        window.RTL_HUB_BLOCKED = true;
+        return;
+      }
+      if (await hubDenied()) {
+        window.RTL_HUB_BLOCKED = true;
+        return;
+      }
+      if (await probe("")) return;
       const saved = readPassword();
       if (saved && await probe(saved)) {
         writePassword(saved);
@@ -120,11 +176,11 @@
   window.rtlFetch = async function (path, opts) {
     opts = opts || {};
     await unlock();
-    const res = await fetch(url(path), Object.assign({}, opts, { headers: headers(opts.headers) }));
+    const res = await fetch(url(path), fetchOpts(Object.assign({}, opts, { headers: headers(opts.headers) })));
     if (API && res.status === 401) {
       clearPassword();
       await unlock();
-      return fetch(url(path), Object.assign({}, opts, { headers: headers(opts.headers) }));
+      return fetch(url(path), fetchOpts(Object.assign({}, opts, { headers: headers(opts.headers) })));
     }
     return res;
   };
@@ -145,6 +201,17 @@
   window.rtlReady = (async function () {
     if (document.readyState === "loading") {
       await new Promise((resolve) => document.addEventListener("DOMContentLoaded", resolve));
+    }
+    if (await blockHubUserWithoutAccess()) return;
+    if (document.querySelector('script[src*="rtl_auth.js"]')) {
+      const passed = await waitHubGate();
+      if (!passed || !(await hubAllowed())) {
+        window.RTL_HUB_BLOCKED = true;
+        return;
+      }
+    } else if (await hubDenied()) {
+      window.RTL_HUB_BLOCKED = true;
+      return;
     }
     await unlock();
   })();

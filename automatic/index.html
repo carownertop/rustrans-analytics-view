@@ -5,16 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Сбор автоматических отчётов · Рустранс</title>
   <base href="./" />
-  <link rel="icon" href="https://141-105-71-134.sslip.io/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="https://141-105-71-134.sslip.io/favicon-32.png" type="image/png" sizes="32x32" />
-  <link rel="apple-touch-icon" href="https://141-105-71-134.sslip.io/apple-touch-icon.png" />
+  <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <meta http-equiv="Cache-Control" content="no-cache" />
-  <link rel="stylesheet" href="static/brand.css?v=mark14" />
+  <link rel="stylesheet" href="static/brand.css?v=mark15" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
-  <script src="static/boot.js?v=hub4"></script>
+  <script src="static/boot.js?v=hub7"></script>
   <script src="static/coverage.js?v=20"></script>
   <script src="static/plan.js?v=9"></script>
+  <script src="static/dept.js?v=1"></script>
 </head>
 <body>
   <header class="head">
@@ -42,15 +41,50 @@
   <main class="sheet">
     <div class="sheet-inner">
       <section class="panel on" id="build">
-        <h2 id="build-title">План продаж</h2>
-        <p class="lead" id="build-lead">Кому звонить и что предложить со склада. Пустой список МОПов — сбор по всей команде.</p>
+        <h2 id="build-title">План отдела</h2>
+        <p class="lead" id="build-lead">ОП на месяц: текущие, новые, Р1 без двойного счёта. Рынок — риск, не вычет.</p>
         <nav class="subnav subnav-tight" id="build-tabs">
-          <button type="button" class="sub-pill on" data-build="plan">План продаж</button>
+          <button type="button" class="sub-pill on" data-build="dept">План отдела</button>
+          <button type="button" class="sub-pill" data-build="plan">План продаж</button>
           <button type="button" class="sub-pill" data-build="segmentation">Сегментация</button>
           <button type="button" class="sub-pill" data-build="coverage">Проработка</button>
         </nav>
 
-        <div class="subpanel on" id="build-plan">
+        <div class="subpanel on" id="build-dept">
+          <p class="hint" style="margin:0 0 12px">Считает ~30–40 сек: 1С + склад + цены конкурентов + воронка 1С РТЛ. Excel сразу попадает во вкладку «Готовые».</p>
+          <div class="adv" id="adv-dept">
+            <button type="button" class="adv-toggle" data-adv="adv-dept" aria-expanded="false">
+              <span class="chev">›</span> Дополнительно
+            </button>
+            <div class="adv-body">
+              <div>
+                <p class="adv-note">По умолчанию — следующий месяц после последней сделки и таблица цен на дату склада.</p>
+                <label class="field-label" for="dept-as-of">Старт месяца прогноза</label>
+                <input id="dept-as-of" type="date" />
+                <label class="field-label" for="dept-price-date" style="margin-top:8px">Дата цен конкурентов</label>
+                <input id="dept-price-date" type="date" />
+              </div>
+            </div>
+          </div>
+          <button type="button" class="primary" id="dept-btn">Рассчитать план отдела</button>
+          <div class="msg" id="dept-msg"></div>
+          <div id="dept-result" class="cov-result" hidden>
+            <div id="dept-summary" class="cov-summary dept-summary"></div>
+            <p class="hint" id="dept-meta" style="margin:0 0 10px"></p>
+            <div class="dept-table-wrap" id="dept-layers"></div>
+            <h3 class="dept-h">Риск: не в рынке</h3>
+            <div class="dept-table-wrap" id="dept-risk"></div>
+            <h3 class="dept-h">Р1 в план</h3>
+            <div class="dept-table-wrap" id="dept-r1"></div>
+            <h3 class="dept-h">По МОПам (текущие + новые, без Р1)</h3>
+            <div class="dept-table-wrap" id="dept-mgr"></div>
+            <div class="cov-toolbar" style="margin-top:12px">
+              <button type="button" class="primary" id="dept-xlsx" hidden>Скачать Excel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="subpanel" id="build-plan">
           <span class="field-label">МОПы</span>
           <div class="mops mops-dense" id="mops"></div>
           <div class="adv" id="adv-plan">
@@ -201,10 +235,11 @@
       </section>
 
       <section class="panel" id="ready">
-        <h2 id="ready-title">План продаж</h2>
+        <h2 id="ready-title">План отдела</h2>
         <p class="lead" id="ready-lead">Скачайте Excel. Фильтры только внутри этого отчёта.</p>
         <nav class="subnav subnav-tight" id="ready-tabs">
-          <button type="button" class="sub-pill on" data-ready="plan">План продаж<span class="n" data-count="plan"></span></button>
+          <button type="button" class="sub-pill on" data-ready="dept">План отдела<span class="n" data-count="dept"></span></button>
+          <button type="button" class="sub-pill" data-ready="plan">План продаж<span class="n" data-count="plan"></span></button>
           <button type="button" class="sub-pill" data-ready="segmentation">Сегментация<span class="n" data-count="segmentation"></span></button>
           <button type="button" class="sub-pill" data-ready="dynamics">Динамика<span class="n" data-count="dynamics"></span></button>
           <button type="button" class="sub-pill" data-ready="coverage">Проработка<span class="n" data-count="coverage"></span></button>
@@ -229,8 +264,12 @@
     </div>
   </main>
   <script>
-    const KIND_TITLE = { plan: "План продаж", segmentation: "Сегментация", dynamics: "Динамика", coverage: "Проработка" };
+    const KIND_TITLE = { dept: "План отдела", plan: "План продаж", segmentation: "Сегментация", dynamics: "Динамика", coverage: "Проработка" };
     const BUILD_COPY = {
+      dept: {
+        title: "План отдела",
+        lead: "ОП на месяц: текущие, новые, Р1 без двойного счёта. Рынок — риск, не вычет.",
+      },
       plan: {
         title: "План продаж",
         lead: "Соберите таблицу, отфильтруйте срез, затем «Сформировать файл». Пустой список МОПов — вся команда.",
@@ -245,7 +284,7 @@
       },
     };
     let allFiles = [];
-    let readyKind = "plan";
+    let readyKind = "dept";
 
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
@@ -442,7 +481,10 @@
       rtlDownload(decodeURIComponent(link.dataset.dl)).catch(() => {});
     });
 
-    (window.rtlReady || Promise.resolve()).then(() => loadState()).catch(() => {});
+    (window.rtlReady || Promise.resolve()).then(() => {
+      if (window.RTL_HUB_BLOCKED) return;
+      return loadState();
+    }).catch(() => {});
   </script>
 </body>
 </html>
