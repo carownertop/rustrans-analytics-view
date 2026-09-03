@@ -1,5 +1,6 @@
 (function () {
   const STATE = { payload: null, fileName: "" };
+  const PRICE_KEY = "rtl_dept_price_date";
 
   function $(id) { return document.getElementById(id); }
   function must(id) {
@@ -169,7 +170,14 @@
     showMsg("Идёт расчёт: 1С, склад, цены, воронка 1С РТЛ.", true);
     const asOf = ($("dept-as-of") && $("dept-as-of").value) || "";
     const priceDate = ($("dept-price-date") && $("dept-price-date").value) || "";
+    if (!priceDate) {
+      btn.disabled = false;
+      btn.textContent = label;
+      showMsg("Выберите дату цен конкурентов.", false);
+      return;
+    }
     try {
+      try { localStorage.setItem(PRICE_KEY, priceDate); } catch (err) {}
       const res = await window.rtlFetch("api/dept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -200,6 +208,37 @@
     }
   }
 
+  function formatStamp(iso) {
+    const parts = String(iso || "").split("-");
+    if (parts.length !== 3) return String(iso || "");
+    return parts[2] + "." + parts[1] + "." + parts[0];
+  }
+
+  async function loadMeta() {
+    const sel = $("dept-price-date");
+    if (!sel) return;
+    try {
+      if (!window.rtlFetch) return;
+      const res = await window.rtlFetch("api/dept/meta");
+      const body = await res.json();
+      const dates = (body && body.price_dates) || [];
+      if (!dates.length) {
+        sel.innerHTML = "<option value=\"\">Нет срезов цен</option>";
+        return;
+      }
+      let saved = "";
+      try { saved = localStorage.getItem(PRICE_KEY) || ""; } catch (err) {}
+      const picked = dates.indexOf(saved) >= 0 ? saved : (body.default_price_date || dates[0]);
+      sel.innerHTML = dates.map(function (iso, i) {
+        const extra = i === 0 ? " — последний" : "";
+        return "<option value=\"" + escapeHtml(iso) + "\">" + escapeHtml(formatStamp(iso)) + extra + "</option>";
+      }).join("");
+      sel.value = picked;
+    } catch (err) {
+      sel.innerHTML = "<option value=\"\">Не удалось загрузить срезы</option>";
+    }
+  }
+
   async function loadLast() {
     try {
       if (!window.rtlFetch) return;
@@ -213,6 +252,13 @@
   function bind() {
     if (!$("dept-btn")) return;
     $("dept-btn").addEventListener("click", run);
+    const sel = $("dept-price-date");
+    if (sel) {
+      sel.addEventListener("change", function () {
+        if (!sel.value) return;
+        try { localStorage.setItem(PRICE_KEY, sel.value); } catch (err) {}
+      });
+    }
     const xlsx = $("dept-xlsx");
     if (xlsx) {
       xlsx.addEventListener("click", function () {
@@ -222,7 +268,9 @@
         });
       });
     }
-    (window.rtlReady || Promise.resolve()).then(loadLast).catch(function () {});
+    (window.rtlReady || Promise.resolve()).then(function () {
+      return loadMeta().then(loadLast);
+    }).catch(function () {});
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();

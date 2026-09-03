@@ -8,12 +8,12 @@
   <link rel="icon" href="static/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <meta http-equiv="Cache-Control" content="no-cache" />
-  <link rel="stylesheet" href="static/brand.css?v=mark15" />
+  <link rel="stylesheet" href="static/brand.css?v=mark16" />
   <script>window.RTL_API = "https://141-105-71-134.sslip.io/a";</script>
   <script src="static/boot.js?v=hub7"></script>
   <script src="static/coverage.js?v=20"></script>
   <script src="static/plan.js?v=9"></script>
-  <script src="static/dept.js?v=1"></script>
+  <script src="static/dept.js?v=2"></script>
 </head>
 <body>
   <header class="head">
@@ -52,17 +52,26 @@
 
         <div class="subpanel on" id="build-dept">
           <p class="hint" style="margin:0 0 12px">Считает ~30–40 сек: 1С + склад + цены конкурентов + воронка 1С РТЛ. Excel сразу попадает во вкладку «Готовые».</p>
+          <div class="build-toolbar">
+            <div class="build-toolbar-row">
+              <div class="build-field build-field-grow">
+                <label class="field-label" for="dept-price-date">Дата цен конкурентов</label>
+                <select id="dept-price-date">
+                  <option value="">Загрузка срезов…</option>
+                </select>
+              </div>
+            </div>
+            <p class="hint" style="margin:0">Берётся срез из сервиса цен конкурентов. Рынок в плане считается только по этой дате.</p>
+          </div>
           <div class="adv" id="adv-dept">
             <button type="button" class="adv-toggle" data-adv="adv-dept" aria-expanded="false">
               <span class="chev">›</span> Дополнительно
             </button>
             <div class="adv-body">
               <div>
-                <p class="adv-note">По умолчанию — следующий месяц после последней сделки и таблица цен на дату склада.</p>
+                <p class="adv-note">По умолчанию — следующий месяц после последней сделки в загруженных 1С.</p>
                 <label class="field-label" for="dept-as-of">Старт месяца прогноза</label>
                 <input id="dept-as-of" type="date" />
-                <label class="field-label" for="dept-price-date" style="margin-top:8px">Дата цен конкурентов</label>
-                <input id="dept-price-date" type="date" />
               </div>
             </div>
           </div>
